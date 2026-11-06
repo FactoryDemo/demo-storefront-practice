@@ -61,6 +61,11 @@ describe("calculateCartTotal", () => {
   it("returns 0 for an empty cart", () => {
     expect(calculateCartTotal([])).toBe(0);
   });
+
+  it("ignores unknown promo codes", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
+    expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
+  });
 });
 
 describe("formatCurrency", () => {

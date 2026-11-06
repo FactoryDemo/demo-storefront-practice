@@ -10,6 +10,12 @@ export type CartItem = {
   quantity: number;
 };
 
+export type PricedLine = {
+  productId: string;
+  quantity: number;
+  lineTotalCents: number;
+};
+
 export type Cart = {
   items: CartItem[];
 };
