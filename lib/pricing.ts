@@ -16,7 +16,7 @@ export function calculateLineTotal(product: Product, quantity: number): number {
   }
   const gross = product.priceCents * quantity;
   if (quantity >= BULK_DISCOUNT_THRESHOLD) {
-    return Math.floor(gross * (1 - BULK_DISCOUNT_RATE));
+    return Math.round(gross * (1 - BULK_DISCOUNT_RATE));
   }
   return gross;
 }
