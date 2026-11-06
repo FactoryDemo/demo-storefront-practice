@@ -17,3 +17,5 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Checkout rules (Finance)
+        run: npx vitest run --config vitest.rules.config.ts
