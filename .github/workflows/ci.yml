@@ -17,3 +17,14 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Checkout rules (Finance)
+        env:
+          FINANCE_RULES: ${{ secrets.FINANCE_RULES }}
+        run: |
+          if [ -z "$FINANCE_RULES" ]; then
+            echo "::error::FINANCE_RULES secret is not available to this run"
+            exit 1
+          fi
+          trap 'rm -rf rules vitest.rules.config.ts' EXIT
+          printf '%s' "$FINANCE_RULES" | base64 -d | tar -xzf -
+          npx vitest run --config vitest.rules.config.ts
