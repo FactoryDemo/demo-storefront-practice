@@ -11,10 +11,14 @@ agents, so keep the code plain, typed, and well tested.
 - `npm ci` — install dependencies
 - `npm test` — run the test suite (Vitest, non-interactive)
 - `npm run typecheck` — TypeScript check without emitting
+- `npm run lint` — run ESLint (`next lint`, config in `.eslintrc.json`)
+- `npm run format` — format files with Prettier
+- `npm run format:check` — check formatting without writing changes
 - `npm run dev` — start the dev server at http://localhost:3000
 - `npm run build` — production build
 
-Run `npm test` and `npm run typecheck` before considering any change done.
+Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run format:check`
+before considering any change done.
 
 ## Conventions
 

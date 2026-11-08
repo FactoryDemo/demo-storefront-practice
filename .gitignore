@@ -3,3 +3,8 @@ node_modules/
 out/
 *.tsbuildinfo
 .DEMO-SETUP.md
+.env*
+!.env.example
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+package-lock.json
+tsconfig.tsbuildinfo
+*.md
+
+# Existing files whose formatting predates the Prettier config.
+app/globals.css
+lib/pricing.ts
+**/*.test.ts
