@@ -8,3 +8,10 @@ out/
 .DS_Store
 .vscode/
 .idea/
+
+# Test, coverage, and docs output
+coverage/
+reports/
+playwright-report/
+test-results/
+docs/api/

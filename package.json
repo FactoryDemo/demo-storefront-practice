@@ -10,20 +10,41 @@
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "test:ci": "vitest run --coverage --retry=2 --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml",
+    "test:e2e": "playwright test",
+    "knip": "knip",
+    "dup:check": "jscpd app components lib server scripts e2e tests",
+    "size": "size-limit",
+    "todo:report": "node scripts/todo-report.mjs",
+    "docs:generate": "typedoc",
+    "agents:check": "node scripts/check-agents-md.mjs"
   },
   "dependencies": {
+    "@vercel/otel": "^2.1.4",
     "next": "14.2.13",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@size-limit/file": "^12.1.0",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "@vitest/coverage-v8": "2.1.9",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.13",
+    "husky": "^9.1.7",
+    "jscpd": "^5.4.2",
+    "knip": "^6.44.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.9.10",
+    "size-limit": "^12.1.0",
+    "typedoc": "^0.28.20",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   }

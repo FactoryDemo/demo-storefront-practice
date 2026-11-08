@@ -1,0 +1,97 @@
+name: Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Unused files, exports, and dependencies (knip)
+        id: knip
+        continue-on-error: true
+        shell: bash
+        run: npm run knip 2>&1 | tee "$RUNNER_TEMP/knip.txt"
+
+      - name: Duplicate code (jscpd)
+        id: dup
+        continue-on-error: true
+        shell: bash
+        run: npm run dup:check 2>&1 | tee "$RUNNER_TEMP/dup.txt"
+
+      - name: Tech debt markers
+        id: todo
+        continue-on-error: true
+        shell: bash
+        run: npm run todo:report 2>&1 | tee "$RUNNER_TEMP/todo.txt"
+
+      - name: API docs (TypeDoc)
+        id: docs
+        continue-on-error: true
+        run: npm run docs:generate
+
+      - name: Build (timed)
+        id: build
+        shell: bash
+        run: |
+          start=$(date +%s)
+          npm run build
+          echo "seconds=$(( $(date +%s) - start ))" >> "$GITHUB_OUTPUT"
+
+      - name: Bundle size (size-limit)
+        id: size
+        continue-on-error: true
+        shell: bash
+        run: npm run size 2>&1 | tee "$RUNNER_TEMP/size.txt"
+
+      - name: Summary
+        if: always()
+        shell: bash
+        env:
+          KNIP: ${{ steps.knip.outcome }}
+          DUP: ${{ steps.dup.outcome }}
+          TODO_REPORT: ${{ steps.todo.outcome }}
+          DOCS: ${{ steps.docs.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          BUILD_SECONDS: ${{ steps.build.outputs.seconds }}
+          SIZE: ${{ steps.size.outcome }}
+        run: |
+          section() {
+            if [ -f "$RUNNER_TEMP/$2" ]; then
+              echo ""
+              echo "<details><summary>$1</summary>"
+              echo ""
+              echo '```'
+              sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/$2" | tail -n 40
+              echo '```'
+              echo "</details>"
+            fi
+          }
+          {
+            echo "## Analysis (report-only)"
+            echo ""
+            echo "| Check | Outcome |"
+            echo "| --- | --- |"
+            echo "| Unused code and dependencies (knip) | $KNIP |"
+            echo "| Duplicate code (jscpd) | $DUP |"
+            echo "| Tech debt markers | $TODO_REPORT |"
+            echo "| API docs (TypeDoc) | $DOCS |"
+            echo "| Build | $BUILD in ${BUILD_SECONDS:-?}s |"
+            echo "| Bundle size (size-limit) | $SIZE |"
+            section "knip output" knip.txt
+            section "jscpd output" dup.txt
+            section "Tech debt markers" todo.txt
+            section "Bundle size" size.txt
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Bean & Byte pricing core",
+  "entryPoints": ["lib"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "readme": "none",
+  "excludePrivate": true
+}

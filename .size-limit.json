@@ -1,0 +1,12 @@
+[
+  {
+    "name": "All client JavaScript",
+    "path": ".next/static/chunks/**/*.js",
+    "limit": "200 kB"
+  },
+  {
+    "name": "Home page chunk",
+    "path": ".next/static/chunks/app/page-*.js",
+    "limit": "3 kB"
+  }
+]
