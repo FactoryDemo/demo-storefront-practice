@@ -1,3 +1,4 @@
+import { BULK_DISCOUNT_THRESHOLD } from "./pricing";
 import type { PricedLine } from "./types";
 
 export type Promotion = {
@@ -14,7 +15,10 @@ export const PROMOTIONS: Promotion[] = [
     code: "SAVE10",
     description: "10% off the order",
     discountCents(lines) {
-      const subtotal = lines.reduce(
+      const fullPrice = lines.filter(
+        (line) => line.quantity < BULK_DISCOUNT_THRESHOLD
+      );
+      const subtotal = fullPrice.reduce(
         (sum, line) => sum + line.lineTotalCents,
         0
       );

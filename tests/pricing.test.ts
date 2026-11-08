@@ -62,6 +62,14 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal([])).toBe(0);
   });
 
+  it("takes SAVE10 off full-price lines only", () => {
+    const items: CartItem[] = [
+      { productId: "latte", quantity: 2 }, // 950, full price
+      { productId: "espresso", quantity: 3 }, // bulk: 797
+    ];
+    expect(calculateCartTotal(items, "save10")).toBe(950 - 95 + 797);
+  });
+
   it("ignores unknown promo codes", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
