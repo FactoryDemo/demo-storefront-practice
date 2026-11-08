@@ -22,8 +22,8 @@
     "agents:check": "node scripts/check-agents-md.mjs"
   },
   "dependencies": {
-    "@vercel/otel": "^2.1.4",
-    "next": "14.2.13",
+    "@vercel/otel": "^2.2.0",
+    "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -37,10 +37,10 @@
     "@typescript-eslint/parser": "^8.72.1",
     "@vitest/coverage-v8": "2.1.9",
     "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.13",
+    "eslint-config-next": "14.2.35",
     "husky": "^9.1.7",
     "jscpd": "^5.4.2",
-    "knip": "^6.44.0",
+    "knip": "^6.44.1",
     "lint-staged": "^16.4.0",
     "prettier": "^3.9.10",
     "size-limit": "^12.1.0",
