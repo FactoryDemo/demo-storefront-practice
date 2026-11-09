@@ -1,18 +1,17 @@
 name: Droid Tag
-"on":
+
+on:
+  issue_comment:
+    types: [created]
   pull_request_review_comment:
-    types:
-      - created
+    types: [created]
   issues:
-    types:
-      - opened
-      - assigned
+    types: [opened, assigned]
   pull_request_review:
-    types:
-      - submitted
-  check_run:
-    types:
-      - completed
+    types: [submitted]
+  pull_request:
+    types: [opened, edited]
+
 jobs:
   droid:
     if: |
@@ -37,5 +36,3 @@ jobs:
         uses: Factory-AI/droid-action@main
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
-          automatic_review: true
-          review_depth: shallow
