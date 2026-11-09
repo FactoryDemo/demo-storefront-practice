@@ -1,5 +1,6 @@
 import { calculateCartTotal, priceLines } from "./pricing";
 import { PRODUCTS } from "./products";
+import { findPromotion } from "./promotions";
 import type { CartItem, PricedLine } from "./types";
 
 export type PickupSlotId = "asap" | "in-15" | "in-30" | "in-45" | "in-60";
@@ -25,6 +26,7 @@ export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
+  promoCode?: string;
 };
 
 /** A placed order. Totals are computed on the server from the catalog. */
@@ -34,6 +36,7 @@ export type Order = {
   pickup: PickupSlotId;
   lines: PricedLine[];
   totalCents: number;
+  promoCode?: string;
   placedAt: string;
 };
 
@@ -48,21 +51,25 @@ export function validateOrderRequest(input: unknown): OrderValidation {
   if (typeof input !== "object" || input === null) {
     return { ok: false, errors: ["Order must be a JSON object."] };
   }
-  const { name, pickup, items } = input as Record<string, unknown>;
+  const { name, pickup, items, promoCode } = input as Record<string, unknown>;
   const errors = [
     ...validateName(name),
     ...validatePickup(pickup),
     ...validateItems(items),
+    ...validatePromoCode(promoCode),
   ];
   if (errors.length > 0) {
     return { ok: false, errors };
   }
+  const promotion =
+    typeof promoCode === "string" ? findPromotion(promoCode) : null;
   return {
     ok: true,
     request: {
       name: (name as string).trim(),
       pickup: pickup as PickupSlotId,
       items: mergeItems(items as CartItem[]),
+      ...(promotion ? { promoCode: promotion.code } : {}),
     },
   };
 }
@@ -78,7 +85,8 @@ export function buildOrder(
     name: request.name,
     pickup: request.pickup,
     lines: priceLines(request.items),
-    totalCents: calculateCartTotal(request.items),
+    totalCents: calculateCartTotal(request.items, request.promoCode),
+    ...(request.promoCode ? { promoCode: request.promoCode } : {}),
     placedAt: placedAt.toISOString(),
   };
 }
@@ -100,6 +108,18 @@ function validateName(name: unknown): string[] {
 function validatePickup(pickup: unknown): string[] {
   const known = PICKUP_SLOTS.some((slot) => slot.id === pickup);
   return known ? [] : ["Choose a pickup time."];
+}
+
+function validatePromoCode(promoCode: unknown): string[] {
+  if (promoCode === undefined) {
+    return [];
+  }
+  if (typeof promoCode !== "string") {
+    return ["Promo code must be text."];
+  }
+  return promoCode.trim() && !findPromotion(promoCode)
+    ? ["This promo code is not valid."]
+    : [];
 }
 
 function validateItems(items: unknown): string[] {

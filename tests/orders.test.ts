@@ -97,6 +97,37 @@ describe("validateOrderRequest", () => {
       { productId: "espresso", quantity: 1 },
     ]);
   });
+
+  it("accepts SAVE10 and stores its canonical code", () => {
+    expect(
+      validateOrderRequest({ ...VALID, promoCode: "  save10  " })
+    ).toEqual({
+      ok: true,
+      request: { ...VALID, promoCode: "SAVE10" },
+    });
+  });
+
+  it.each(["", "   "])("treats a blank code %j as no promo", (promoCode) => {
+    expect(validateOrderRequest({ ...VALID, promoCode })).toEqual({
+      ok: true,
+      request: VALID,
+    });
+  });
+
+  it("rejects unknown promo codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "SAVE100" })).toEqual([
+      "This promo code is not valid.",
+    ]);
+  });
+
+  it.each([null, 10, false, [], {}, ["SAVE10"]])(
+    "rejects a non-text promo code %j",
+    (promoCode) => {
+      expect(errorsFor({ ...VALID, promoCode })).toEqual([
+        "Promo code must be text.",
+      ]);
+    }
+  );
 });
 
 describe("buildOrder", () => {
@@ -123,6 +154,37 @@ describe("buildOrder", () => {
       ],
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
+    });
+  });
+
+  it("re-prices a promo order and ignores client totals and discounts", () => {
+    const validated = validateOrderRequest({
+      ...VALID,
+      items: [
+        { productId: "drip", quantity: 1 },
+        { productId: "drip", quantity: 2 },
+        { productId: "espresso", quantity: 1 },
+      ],
+      promoCode: " save10 ",
+      totalCents: 1,
+      discountCents: 1239,
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) {
+      throw new Error("Expected a valid promo order");
+    }
+    const order = buildOrder(
+      validated.request,
+      "BB-PROMO1",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order).toMatchObject({
+      promoCode: "SAVE10",
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
+      totalCents: 1116,
     });
   });
 });

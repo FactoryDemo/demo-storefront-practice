@@ -17,13 +17,17 @@ import {
   parseStoredCart,
 } from "../lib/cart";
 import type { CartItem } from "../lib/types";
+import { findPromotion } from "../lib/promotions";
 import { track } from "./posthog";
 
 const STORAGE_KEY = "bean-and-byte:cart";
+const PROMO_STORAGE_KEY = "bean-and-byte:promo-code";
 
 type CartContextValue = {
   items: CartItem[];
   itemCount: number;
+  promoCode: string | undefined;
+  setPromoCode: (code: string | undefined) => void;
   /** False until the saved cart has been read from localStorage. */
   isLoaded: boolean;
   isOpen: boolean;
@@ -39,11 +43,14 @@ const CartContext = createContext<CartContextValue | null>(null);
 /** Holds the cart for every page and keeps it in localStorage. */
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [promoCode, setPromoCode] = useState<string>();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     setItems(parseStoredCart(window.localStorage.getItem(STORAGE_KEY)));
+    const savedCode = window.localStorage.getItem(PROMO_STORAGE_KEY);
+    setPromoCode(savedCode ? findPromotion(savedCode)?.code : undefined);
     setIsLoaded(true);
   }, []);
 
@@ -51,8 +58,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Writing before the first read would wipe the saved cart.
     if (isLoaded) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      if (promoCode) {
+        window.localStorage.setItem(PROMO_STORAGE_KEY, promoCode);
+      } else {
+        window.localStorage.removeItem(PROMO_STORAGE_KEY);
+      }
     }
-  }, [items, isLoaded]);
+  }, [items, promoCode, isLoaded]);
 
   const addItem = useCallback((productId: string) => {
     setItems((current) => addCartItem(current, productId));
@@ -66,18 +78,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     () => ({
       items,
       itemCount: countItems(items),
+      promoCode,
+      setPromoCode,
       isLoaded,
       isOpen,
       addItem,
       changeQuantity,
-      clear: () => setItems([]),
+      clear: () => {
+        setItems([]);
+        setPromoCode(undefined);
+      },
       openCart: () => {
         setIsOpen(true);
-        track(ANALYTICS_EVENTS.cartOpened, cartProperties(items));
+        track(ANALYTICS_EVENTS.cartOpened, cartProperties(items, promoCode));
       },
       closeCart: () => setIsOpen(false),
     }),
-    [items, isLoaded, isOpen, addItem, changeQuantity]
+    [items, promoCode, isLoaded, isOpen, addItem, changeQuantity]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

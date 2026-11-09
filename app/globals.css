@@ -497,6 +497,33 @@ main {
   color: var(--muted);
 }
 
+.promo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-controls,
+.promo-applied {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.promo-controls input {
+  min-width: 0;
+  flex: 1;
+}
+
+.promo-applied {
+  justify-content: space-between;
+}
+
+.promo-form .form-errors {
+  margin: 0;
+}
+
 .cart-total,
 .order-total {
   display: flex;
