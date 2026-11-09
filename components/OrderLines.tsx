@@ -2,14 +2,16 @@ import { formatCurrency } from "../lib/currency";
 import { BULK_DISCOUNT_THRESHOLD } from "../lib/pricing";
 import { getProduct } from "../lib/products";
 import type { PricedLine } from "../lib/types";
+import { PromoDiscount } from "./PromoDiscount";
 
 type OrderLinesProps = {
   lines: PricedLine[];
   totalCents: number;
+  promoCode?: string;
 };
 
 /** Read-only list of priced lines and the order total. */
-export function OrderLines({ lines, totalCents }: OrderLinesProps) {
+export function OrderLines({ lines, totalCents, promoCode }: OrderLinesProps) {
   return (
     <div className="order-lines">
       <ul>
@@ -26,6 +28,7 @@ export function OrderLines({ lines, totalCents }: OrderLinesProps) {
           </li>
         ))}
       </ul>
+      <PromoDiscount lines={lines} promoCode={promoCode} />
       <div className="order-total">
         <span>Total</span>
         <span>{formatCurrency(totalCents)}</span>

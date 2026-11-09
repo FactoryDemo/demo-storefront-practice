@@ -44,11 +44,16 @@ flowchart LR
 2. **Cart.** `components/CartProvider.tsx` holds the cart as `CartItem[]`
    (product id and quantity) for every page and saves it in
    `localStorage`. The quantity changes themselves are pure functions in
-   `lib/cart.ts`. Cart UI only changes quantities; it never computes money.
+   `lib/cart.ts`. Cart UI changes quantities and applies promo codes; it
+   never computes money.
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent.
+   cent. `lib/promotions.ts` defines SAVE10: 10% off the subtotal after
+   bulk pricing, with the discount rounded to the nearest cent (half up).
+   The cart stores the applied code separately in `localStorage` and clears
+   it when an order is placed. Cart, checkout, and confirmation show the
+   order discount separately from line discounts.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only
    place cents become a display string such as `$9.45`.
 
@@ -59,7 +64,7 @@ sequenceDiagram
   participant B as Browser (components/Checkout.tsx)
   participant R as POST /api/orders
   participant O as lib/orders.ts
-  B->>R: name, pickup slot, items
+  B->>R: name, pickup slot, items, optional promo code
   R->>O: validateOrderRequest
   O-->>R: errors, or a clean request
   R->>O: buildOrder (re-prices from the catalog)
@@ -72,7 +77,10 @@ sequenceDiagram
   again through `lib/pricing.ts`.
 - `validateOrderRequest` rejects blank or long names, unknown pickup slots,
   empty carts, unknown products, and quantities outside 1 to 99, and merges
-  repeated products into one line.
+  repeated products into one line. Optional promo codes must be text and
+  match a live promotion (case-insensitively, ignoring surrounding spaces);
+  blank codes mean no promotion. The server computes the discounted total
+  and returns the normalized code with the order.
 - Orders are not stored. The confirmation page (`app/orders/[id]/page.tsx`)
   reads the last order from `sessionStorage` in the same tab.
 

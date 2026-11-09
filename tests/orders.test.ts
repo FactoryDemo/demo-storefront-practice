@@ -97,9 +97,75 @@ describe("validateOrderRequest", () => {
       { productId: "espresso", quantity: 1 },
     ]);
   });
+
+  it("normalizes a valid promo code and ignores client-supplied prices", () => {
+    expect(
+      validateOrderRequest({
+        ...VALID,
+        promoCode: "  save10  ",
+        totalCents: 1,
+        discountCents: 100000,
+      })
+    ).toEqual({
+      ok: true,
+      request: { ...VALID, promoCode: "SAVE10" },
+    });
+  });
+
+  it.each(["", "   "])("treats %j as no promo code", (promoCode) => {
+    expect(validateOrderRequest({ ...VALID, promoCode })).toEqual({
+      ok: true,
+      request: VALID,
+    });
+  });
+
+  it("rejects an unknown promo code", () => {
+    expect(errorsFor({ ...VALID, promoCode: "SAVE100" })).toEqual([
+      "That promo code isn't valid.",
+    ]);
+  });
+
+  it.each([null, 10, true, {}, ["SAVE10"]])(
+    "rejects non-text promo code %j",
+    (promoCode) => {
+      expect(errorsFor({ ...VALID, promoCode })).toEqual([
+        "Promo code must be text.",
+      ]);
+    }
+  );
 });
 
 describe("buildOrder", () => {
+  it("applies SAVE10 after merging and bulk-pricing order lines", () => {
+    const validated = validateOrderRequest({
+      ...VALID,
+      promoCode: " save10 ",
+      totalCents: 1,
+      items: [
+        { productId: "drip", quantity: 1 },
+        { productId: "drip", quantity: 2 },
+        { productId: "espresso", quantity: 1 },
+      ],
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) {
+      throw new Error("Expected a valid order");
+    }
+    const order = buildOrder(
+      validated.request,
+      "BB-PROMO1",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order).toMatchObject({
+      promoCode: "SAVE10",
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
+      totalCents: 1116,
+    });
+  });
+
   it("prices lines and the total from the catalog", () => {
     const order = buildOrder(
       {

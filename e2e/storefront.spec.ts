@@ -72,6 +72,107 @@ test("the cart survives a page reload", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("SAVE10 survives reload and checkout, then clears with the order", async ({
+  page,
+}) => {
+  await openStorefront(page);
+  await addToCart(page, "Drip Coffee", 3);
+  await addToCart(page, "Espresso");
+  let cart = await openCart(page);
+  await cart.getByLabel("Promo code").fill("  save10  ");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("status")).toHaveText("SAVE10 applied.");
+  await expect(cart.locator(".promo-discount")).toContainText("−$1.24");
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+
+  // Applying the same code again must not compound the discount.
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code")).toHaveValue("SAVE10");
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await cart.getByRole("link", { name: "Checkout" }).click();
+  await expect(page).toHaveURL(/\/checkout$/);
+  await page.reload();
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".promo-discount")).toContainText("−$1.24");
+  await page.getByLabel("Name for the order").fill("Promo Test");
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/orders") &&
+      response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  const response = await responsePromise;
+  expect(response.status()).toBe(201);
+  expect(response.request().postDataJSON()).toMatchObject({
+    promoCode: "SAVE10",
+  });
+  expect(await response.json()).toMatchObject({
+    promoCode: "SAVE10",
+    totalCents: 1116,
+  });
+  await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".promo-discount")).toContainText("−$1.24");
+  await page.reload();
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await page.getByRole("link", { name: "Start a new order" }).click();
+  await addToCart(page, "Espresso");
+  cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code")).toHaveValue("");
+  await expect(cart.locator(".cart-total")).toContainText("$2.95");
+  await expect(cart.locator(".promo-discount")).toHaveCount(0);
+});
+
+test("promo feedback, quantity changes, and removal keep totals correct", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStorefront(page);
+  await addToCart(page, "Drip Coffee", 2);
+  let cart = await openCart(page);
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("alert")).toHaveText(
+    "That promo code isn't valid."
+  );
+  await cart.getByLabel("Promo code").fill("SAVE100");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("alert")).toBeVisible();
+  await expect(cart.locator(".cart-total")).toContainText("$7.00");
+  await cart.getByLabel("Promo code").fill("SAVE10");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("alert")).toHaveCount(0);
+  await expect(cart.locator(".cart-total")).toContainText("$6.30");
+  await cart.getByRole("button", { name: "Add one Drip Coffee" }).click();
+  await expect(cart.locator(".cart-line-total")).toHaveText("$9.45");
+  await expect(cart.locator(".promo-discount")).toContainText("−$0.95");
+  await expect(cart.locator(".cart-total")).toContainText("$8.50");
+
+  // A failed replacement must not silently remove an applied code.
+  await cart.getByLabel("Promo code").fill("INVALID");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("alert")).toBeVisible();
+  await expect(cart.locator(".cart-total")).toContainText("$8.50");
+  await cart.getByRole("button", { name: "Remove code" }).click();
+  await expect(cart.getByLabel("Promo code")).toHaveValue("");
+  await expect(cart.getByRole("alert")).toHaveCount(0);
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
+  await expect(cart.locator(".promo-discount")).toHaveCount(0);
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code")).toHaveValue("");
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
+  await cart.getByRole("link", { name: "Checkout" }).click();
+  await expect(
+    page.getByRole("button", { name: "Place order · $9.45" })
+  ).toBeVisible();
+});
+
 test("checkout places a pickup order and shows the confirmation", async ({
   page,
 }) => {
@@ -127,4 +228,35 @@ test("GET /api/health returns ok", async ({ request }) => {
 
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: "ok" });
+});
+
+test("POST /api/orders validates SAVE10 and ignores supplied discounts", async ({
+  request,
+}) => {
+  const order = {
+    name: "Promo Test",
+    pickup: "asap",
+    items: [
+      { productId: "drip", quantity: 1 },
+      { productId: "drip", quantity: 2 },
+      { productId: "espresso", quantity: 1 },
+    ],
+    totalCents: 1,
+    discountCents: 100000,
+  };
+  const placed = await request.post("/api/orders", {
+    data: { ...order, promoCode: " save10 " },
+  });
+  expect(placed.status()).toBe(201);
+  expect(await placed.json()).toMatchObject({
+    promoCode: "SAVE10",
+    totalCents: 1116,
+  });
+  for (const promoCode of ["SAVE100", null, 10, {}, ["SAVE10"]]) {
+    const rejected = await request.post("/api/orders", {
+      data: { ...order, promoCode },
+    });
+    expect(rejected.status()).toBe(400);
+    expect((await rejected.json()).errors).toHaveLength(1);
+  }
 });

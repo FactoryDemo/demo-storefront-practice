@@ -66,6 +66,52 @@ describe("calculateCartTotal", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
+
+  it.each(["SAVE10", "save10", "  SaVe10  "])(
+    "takes 10%% off the order with %j",
+    (code) => {
+      expect(
+        calculateCartTotal([{ productId: "latte", quantity: 2 }], code)
+      ).toBe(855);
+    }
+  );
+
+  it("applies SAVE10 after per-line bulk discounts", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // 295
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
+  });
+
+  it("rounds the order discount to the nearest cent", () => {
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")
+    ).toBe(265);
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 3 }], "SAVE10")
+    ).toBe(850);
+  });
+
+  it("keeps an empty or invalid cart at zero with SAVE10", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "does-not-exist", quantity: 3 },
+          { productId: "drip", quantity: 0 },
+          { productId: "latte", quantity: -1 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(0);
+  });
+
+  it.each(["", "   "])("ignores a blank promo code %j", (code) => {
+    expect(
+      calculateCartTotal([{ productId: "latte", quantity: 2 }], code)
+    ).toBe(950);
+  });
 });
 
 describe("formatCurrency", () => {

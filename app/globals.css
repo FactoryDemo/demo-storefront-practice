@@ -497,6 +497,28 @@ main {
   color: var(--muted);
 }
 
+.promo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.promo-discount {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
 .cart-total,
 .order-total {
   display: flex;
