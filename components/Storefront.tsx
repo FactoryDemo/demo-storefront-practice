@@ -1,100 +1,67 @@
-"use client";
-
-import { useState } from "react";
-import { PRODUCTS, getProduct } from "../lib/products";
-import { calculateLineTotal, calculateCartTotal } from "../lib/pricing";
-import { formatCurrency } from "../lib/currency";
-import type { CartItem } from "../lib/types";
+import Image from "next/image";
+import { BULK_DISCOUNT_THRESHOLD } from "../lib/pricing";
+import { CATEGORIES, productsInCategory } from "../lib/products";
+import { ProductCard } from "./ProductCard";
 
 export default function Storefront() {
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  function addToCart(productId: string) {
-    setCart((current) => {
-      const existing = current.find((i) => i.productId === productId);
-      if (existing) {
-        return current.map((i) =>
-          i.productId === productId ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...current, { productId, quantity: 1 }];
-    });
-  }
-
-  function changeQuantity(productId: string, delta: number) {
-    setCart((current) =>
-      current
-        .map((i) =>
-          i.productId === productId ? { ...i, quantity: i.quantity + delta } : i
-        )
-        .filter((i) => i.quantity > 0)
-    );
-  }
-
-  const total = calculateCartTotal(cart);
-
   return (
     <>
-      <div className="header">
-        <h1>☕ Bean &amp; Byte</h1>
-        <span className="tagline">
-          Buy 3+ of any one item and that line is 10% off
-        </span>
-      </div>
-
-      <div className="grid">
-        {PRODUCTS.map((product) => (
-          <div className="product-card" key={product.id}>
-            <div style={{ fontSize: 30 }}>{product.emoji}</div>
-            <div className="name">{product.name}</div>
-            <div className="price">{formatCurrency(product.priceCents)}</div>
-            <button onClick={() => addToCart(product.id)}>Add to cart</button>
+      <section className="hero">
+        <div>
+          <p className="eyebrow">Order ahead · Ready in about 10 minutes</p>
+          <h1>Bean &amp; Byte</h1>
+          <p className="hero-lede">
+            Small-batch coffee and a short menu, made carefully. Order ahead and
+            skip the line.
+          </p>
+          <div className="hero-actions">
+            <a className="button button-primary" href="#menu">
+              Start an order
+            </a>
+            <span className="hero-note">
+              Buy {BULK_DISCOUNT_THRESHOLD} or more of one item and that line is
+              10% off.
+            </span>
           </div>
-        ))}
-      </div>
+        </div>
+        <div className="hero-image">
+          <Image
+            src="/products/latte.jpg"
+            alt="A latte with tulip latte art on a cream saucer"
+            fill
+            priority
+            sizes="(max-width: 860px) 100vw, 540px"
+          />
+        </div>
+      </section>
 
-      <div className="cart-panel">
-        <h2>Your cart</h2>
-        {cart.length === 0 ? (
-          <div className="cart-empty">Nothing here yet. The coffee awaits.</div>
-        ) : (
-          <>
-            {cart.map((item) => {
-              const product = getProduct(item.productId);
-              return (
-                <div className="cart-line" key={item.productId}>
-                  <span>
-                    {product.emoji} {product.name}
-                  </span>
-                  <span className="qty-controls">
-                    <button
-                      onClick={() => changeQuantity(item.productId, -1)}
-                      aria-label={`Remove one ${product.name}`}
-                    >
-                      −
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button
-                      onClick={() => changeQuantity(item.productId, 1)}
-                      aria-label={`Add one ${product.name}`}
-                    >
-                      +
-                    </button>
-                    <span style={{ minWidth: 72, textAlign: "right" }}>
-                      {formatCurrency(
-                        calculateLineTotal(product, item.quantity)
-                      )}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-            <div className="cart-total">
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
+      <nav className="category-nav" aria-label="Menu categories">
+        {CATEGORIES.map((category) => (
+          <a key={category.id} href={`#${category.id}`}>
+            {category.name}
+          </a>
+        ))}
+      </nav>
+
+      <div id="menu">
+        {CATEGORIES.map((category) => (
+          <section
+            key={category.id}
+            id={category.id}
+            className="menu-section"
+            aria-labelledby={`${category.id}-title`}
+          >
+            <div className="menu-section-header">
+              <h2 id={`${category.id}-title`}>{category.name}</h2>
+              <p>{category.description}</p>
             </div>
-          </>
-        )}
+            <div className="product-grid">
+              {productsInCategory(category.id).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </>
   );

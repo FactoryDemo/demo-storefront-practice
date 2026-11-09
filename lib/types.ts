@@ -1,8 +1,19 @@
+export type ProductCategory = "hot" | "cold" | "beans" | "bakery";
+
 export type Product = {
   id: string;
   name: string;
   priceCents: number;
-  emoji: string;
+  category: ProductCategory;
+  description: string;
+  /** Path of the product photo under public/, e.g. "/products/espresso.jpg". */
+  image: string;
+};
+
+export type Category = {
+  id: ProductCategory;
+  name: string;
+  description: string;
 };
 
 export type CartItem = {

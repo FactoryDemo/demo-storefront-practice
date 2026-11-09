@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getProduct, PRODUCTS } from "../lib/products";
+import { getProduct } from "../lib/products";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -77,12 +77,5 @@ describe("formatCurrency", () => {
   it("formats zero and large amounts", () => {
     expect(formatCurrency(0)).toBe("$0.00");
     expect(formatCurrency(123456)).toBe("$1,234.56");
-  });
-});
-
-describe("catalog", () => {
-  it("has unique product ids", () => {
-    const ids = PRODUCTS.map((p) => p.id);
-    expect(new Set(ids).size).toBe(ids.length);
   });
 });

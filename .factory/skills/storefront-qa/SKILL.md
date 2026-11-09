@@ -1,12 +1,12 @@
 ---
 name: storefront-qa
-description: Manually QA the Bean & Byte storefront in a browser. Use after changing the catalog, cart, pricing, or currency display to confirm the app runs, the bulk discount shows on a cart line, and the health endpoint responds.
+description: Manually QA the Bean & Byte storefront end to end. Starts the dev server, adds three of one item, confirms that line is 10% off in the cart drawer, places a pickup order through checkout, and checks GET /api/health. Use after changing pricing, cart, checkout, or UI code, or when asked to verify the app works in a browser.
 ---
 
 # Storefront QA
 
-Bring the app up locally and exercise the catalog, cart, and pricing end to
-end. No login, accounts, or external services are needed.
+Use this to confirm the storefront works for a real user after a change.
+No login, credentials, or environment variables are needed.
 
 ## 1. Start the app
 
@@ -15,37 +15,56 @@ npm ci
 npm run dev
 ```
 
-Wait for `Ready` in the output. The app serves http://localhost:3000. If the
-port is busy or the build looks stale, follow
-`docs/runbooks/local-development.md`.
+Wait for `Ready` in the output, then open http://localhost:3000. If port
+3000 is busy, see `docs/runbooks/local-development.md`.
 
-## 2. Check the health endpoint
+## 2. Check the menu
+
+- The page heading reads "Bean & Byte", with a large product photo beside it.
+- The menu has four sections: Hot coffee, Cold, Beans, and Bakery.
+- Each product card shows a photo, a name, a price (Drip Coffee is $3.50), a
+  short description, and an "Add to cart" button.
+- The header's cart button shows 0.
+
+## 3. Add three of one item
+
+- Click "Add to cart" on Drip Coffee three times. The card shows "3 in cart"
+  and the header's cart button shows 3.
+- Open the cart from the header. The drawer shows one Drip Coffee line with
+  quantity 3, marked "10% off this line".
+- That line is 10% off: 3 × $3.50 = $10.50, so the line shows **$9.45**.
+
+## 4. Check the cart total
+
+- With only that line, the Total row shows **$9.45**.
+- Add one Espresso ($2.95). Its line stays at full price ($2.95) and the
+  total becomes **$12.40**.
+- Click "−" on Drip Coffee once. Quantity 2 is below the threshold, so the
+  line becomes $7.00 and the total $9.95. Click "+" to go back to 3.
+- Reload the page. The cart keeps its items (it is saved in localStorage).
+
+## 5. Place an order
+
+- In the cart drawer, click **Checkout**.
+- The order summary matches the cart, with a "10% off" tag on the Drip
+  Coffee line and a total of $12.40.
+- Enter a name, choose a pickup time, and click **Place order · $12.40**.
+- The confirmation page shows an order number (`BB-` and six characters),
+  "Thanks, <name>", the pickup time, the same lines, and $12.40. The header
+  cart is back to 0.
+- The dev server log shows one JSON line with `"message":"order placed"`
+  and the total in cents. The customer's name is not logged.
+
+## 6. Check the health endpoint
 
 ```bash
 curl localhost:3000/api/health
 ```
 
-Expect HTTP 200 and the body `{"status":"ok"}`. The dev server log prints a
-JSON line with `"message":"health check"`.
+Expect HTTP 200 with `{"status":"ok"}`. The dev server log shows one JSON
+line with `"message":"health check"`.
 
-## 3. Exercise the storefront
+## Report
 
-Open http://localhost:3000 in a browser (or drive it with a browser
-automation tool) and check each step:
-
-1. The header reads "Bean & Byte" and the catalog shows products with
-   prices, for example Drip Coffee at $3.50.
-2. The cart says "Nothing here yet" before anything is added.
-3. Click **Add to cart** on Drip Coffee three times.
-4. The Drip Coffee cart line shows quantity 3 and **$9.45**: 3 × $3.50 is
-   $10.50, and three or more of one item takes 10% off that line.
-5. Click **+** to make it 4 and expect $12.60 (4 × $3.50 = $14.00, less 10%).
-   Click **−** back to 2 and expect $7.00, with no discount.
-6. Add one Cold Brew ($4.25). The Cold Brew line stays at full price, and the
-   cart **Total** equals the sum of the line totals.
-
-## 4. Report
-
-List each step as pass or fail, with the amounts you saw. For a failure,
-include the cart contents and the expected and actual amounts, and run
-`npm test` to see whether a pricing unit test catches it.
+State what you checked, the amounts you saw, and anything that did not
+match. The automated version of these steps is `npm run test:e2e`.

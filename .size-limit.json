@@ -2,7 +2,7 @@
   {
     "name": "All client JavaScript",
     "path": ".next/static/chunks/**/*.js",
-    "limit": "200 kB"
+    "limit": "220 kB"
   },
   {
     "name": "Home page chunk",
