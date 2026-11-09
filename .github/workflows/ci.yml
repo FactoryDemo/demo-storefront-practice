@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   test:
@@ -28,3 +29,35 @@ jobs:
           trap 'rm -rf rules vitest.rules.config.ts' EXIT
           printf '%s' "$FINANCE_RULES" | base64 -d | tar -xzf -
           npx vitest run --config vitest.rules.config.ts
+
+  # Reviews only code that already passes tests and Finance's checkout rules,
+  # so a red pull request gets no review until it is fixed.
+  droid-review:
+    needs: test
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: droid-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - name: Run Droid Auto Review
+        uses: Factory-AI/droid-action@main
+        with:
+          factory_api_key: ${{ secrets.FACTORY_API_KEY }}
+          automatic_review: true
+          automatic_security_review: true
+          review_depth: deep
+          allowed_bots: factory-droid
