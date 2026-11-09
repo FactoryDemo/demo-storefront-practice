@@ -44,6 +44,15 @@ discounted and undiscounted lines at once — `tests/pricing.test.ts` pins
 the behavior down. Checkout re-prices every order on the server, so the
 browser never decides what an order costs.
 
+## Observability
+
+Deployed on Vercel, the storefront reports product analytics, feature
+flags, and errors to PostHog, and traces, metrics, and profiles to Grafana
+Cloud. Deploys are recorded by the Deploy workflow and marked on the
+dashboard, and new errors and firing alerts become GitHub issues. See
+`docs/runbooks/observability.md`. Locally, all of it stays off unless you
+set the variables in `.env.example`.
+
 ## Automated review
 
 Pull requests in this repository are automatically reviewed by Factory Droid.

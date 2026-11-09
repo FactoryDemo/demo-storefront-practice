@@ -63,6 +63,12 @@ more detail, including the `/api/health` check.
   rounding.
 - Prefer named exports and explicit types over cleverness. TypeScript
   strict mode is on; do not silence it.
+- Analytics event names and feature flag keys live in `lib/analytics.ts`.
+  Send events with `track()` from `components/posthog.ts`, and never put the
+  customer's name or other personal data in event properties. Every flag is
+  off until PostHog answers, so the app must work with all flags off.
+- Wrap API route handlers in `withTelemetry` from `server/telemetry.ts` so
+  errors are reported and metrics are flushed.
 - Commit messages: one line, imperative, lowercase, no prefix. Example:
   `apply bulk discount per cart line, not per cart`.
 - `lib/` stays pure; server-only code with I/O (such as the JSON logger in
@@ -86,6 +92,9 @@ identifier formats below; ids and slugs in data follow them by convention.
   requires.
 
 ESLint also caps function complexity at 10 and files at 400 lines.
+
+Where analytics, errors, traces, metrics, profiles, deploys, and alerts go,
+and what to do when one fires, is in `docs/runbooks/observability.md`.
 
 ## Pull requests
 

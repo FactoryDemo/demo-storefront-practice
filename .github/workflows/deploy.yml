@@ -1,0 +1,70 @@
+name: Deploy
+
+# Vercel builds and deploys every push to main through its GitHub app and
+# reports back as a commit status. This workflow turns each successful
+# production deploy into a GitHub deployment record (deployment frequency)
+# and a deploy marker in Grafana and PostHog (deploy observability).
+
+on:
+  status:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  record:
+    if: >-
+      github.event.context == 'Vercel' &&
+      github.event.state == 'success' &&
+      contains(github.event.branches.*.name, 'main')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-record-${{ github.event.sha }}
+    env:
+      SHA: ${{ github.event.sha }}
+      TARGET_URL: ${{ github.event.target_url }}
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Record the GitHub deployment
+        run: |
+          id=$(jq -n --arg ref "$SHA" \
+            '{ref: $ref, environment: "Production", auto_merge: false, required_contexts: [], description: "Vercel production deploy"}' \
+            | gh api "repos/$GITHUB_REPOSITORY/deployments" --input - --jq .id)
+          gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses" \
+            -f state=success -f log_url="$TARGET_URL" \
+            -f environment_url="${PRODUCTION_URL:-$TARGET_URL}" > /dev/null
+          echo "Recorded deployment $id for ${SHA:0:7}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mark the deploy in Grafana
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -z "$GRAFANA_URL" ]; then echo "GRAFANA_URL is not set; skipping."; exit 0; fi
+          message=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA" --jq '.commit.message | split("\n")[0]')
+          jq -n --arg text "Deploy ${SHA:0:7} to ${GITHUB_REPOSITORY#*/}: $message" \
+                --arg repo "${GITHUB_REPOSITORY#*/}" --arg sha "${SHA:0:7}" \
+            '{text: $text, tags: ["deploy", "bean-and-byte", $repo, $sha], time: (now * 1000 | floor)}' \
+            | curl -fsS -X POST "${GRAFANA_URL%/}/api/annotations" \
+                -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+                -H "Content-Type: application/json" --data @- > /dev/null
+          echo "Grafana deploy annotation added" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mark the deploy in PostHog
+        # Needs the annotation:write scope on the key; a missing scope must not
+        # hide the deploy record above.
+        continue-on-error: true
+        env:
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.posthog.com' }}
+        run: |
+          if [ -z "$POSTHOG_PERSONAL_API_KEY" ]; then echo "POSTHOG_PERSONAL_API_KEY is not set; skipping."; exit 0; fi
+          jq -n --arg content "Deploy ${SHA:0:7} to ${GITHUB_REPOSITORY#*/}" \
+            '{content: $content, date_marker: (now | todate), scope: "project"}' \
+            | curl -fsS -X POST "$POSTHOG_HOST/api/projects/$POSTHOG_PROJECT_ID/annotations/" \
+                -H "Authorization: Bearer $POSTHOG_PERSONAL_API_KEY" \
+                -H "Content-Type: application/json" --data @- > /dev/null
+          echo "PostHog deploy annotation added" >> "$GITHUB_STEP_SUMMARY"

@@ -524,6 +524,19 @@ main {
   }
 }
 
+/* Feature-flagged menu notice */
+
+.announcement {
+  margin: 0 0 24px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--sand);
+  color: var(--ink);
+  font-size: 15px;
+  text-align: center;
+}
+
 /* Checkout and confirmation */
 
 .page {

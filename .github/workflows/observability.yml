@@ -1,0 +1,29 @@
+name: Observability
+
+# Applies the Grafana dashboard and alert rules in observability/grafana/
+# whenever they change on main.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "observability/**"
+      - "scripts/grafana-sync.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grafana:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: Sync dashboard and alert rules
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
+        run: node scripts/grafana-sync.mjs

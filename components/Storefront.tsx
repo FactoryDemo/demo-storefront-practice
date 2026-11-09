@@ -1,11 +1,13 @@
 import Image from "next/image";
 import { BULK_DISCOUNT_THRESHOLD } from "../lib/pricing";
 import { CATEGORIES, productsInCategory } from "../lib/products";
+import { MenuAnnouncement } from "./MenuAnnouncement";
 import { ProductCard } from "./ProductCard";
 
 export default function Storefront() {
   return (
     <>
+      <MenuAnnouncement />
       <section className="hero">
         <div>
           <p className="eyebrow">Order ahead · Ready in about 10 minutes</p>

@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { ANALYTICS_EVENTS, cartProperties } from "../lib/analytics";
 import {
   addItem as addCartItem,
   changeQuantity as changeCartQuantity,
@@ -16,6 +17,7 @@ import {
   parseStoredCart,
 } from "../lib/cart";
 import type { CartItem } from "../lib/types";
+import { track } from "./posthog";
 
 const STORAGE_KEY = "bean-and-byte:cart";
 
@@ -69,7 +71,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addItem,
       changeQuantity,
       clear: () => setItems([]),
-      openCart: () => setIsOpen(true),
+      openCart: () => {
+        setIsOpen(true);
+        track(ANALYTICS_EVENTS.cartOpened, cartProperties(items));
+      },
       closeCart: () => setIsOpen(false),
     }),
     [items, isLoaded, isOpen, addItem, changeQuantity]

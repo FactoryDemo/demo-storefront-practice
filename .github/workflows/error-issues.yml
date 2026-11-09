@@ -1,0 +1,44 @@
+name: Error issues
+
+# Turns production telemetry into GitHub issues: new PostHog error tracking
+# issues and firing Grafana alerts each get one issue, deduplicated, and a
+# closed issue is reopened if the problem comes back.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: How far back to look for PostHog errors
+        default: "24"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: error-issues
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: File issues for new PostHog errors
+        env:
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST || 'https://us.posthog.com' }}
+          LOOKBACK_HOURS: ${{ inputs.lookback_hours || '24' }}
+        run: node scripts/posthog-error-issues.mjs
+      - name: File issues for firing Grafana alerts
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
+        run: node scripts/grafana-alert-issues.mjs

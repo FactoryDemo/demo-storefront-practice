@@ -22,8 +22,15 @@
     "agents:check": "node scripts/check-agents-md.mjs"
   },
   "dependencies": {
-    "@vercel/otel": "^2.2.0",
+    "@opentelemetry/api": "~1.9.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.223.0",
+    "@opentelemetry/sdk-metrics": "^2.12.0",
+    "@pyroscope/nodejs": "^0.6.5",
+    "@vercel/functions": "^3.11.0",
+    "@vercel/otel": "^2.3.0",
     "next": "14.2.35",
+    "posthog-js": "^1.447.4",
+    "posthog-node": "^5.63.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

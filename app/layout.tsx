@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "../components/Analytics";
 import { CartDrawer } from "../components/CartDrawer";
 import { CartProvider } from "../components/CartProvider";
 import { SiteHeader } from "../components/SiteHeader";
@@ -22,6 +23,7 @@ export default function RootLayout({
           <SiteHeader />
           {children}
           <CartDrawer />
+          <Analytics />
           <footer className="site-footer">
             <p>
               Bean &amp; Byte is a demo storefront. Orders are pretend and no

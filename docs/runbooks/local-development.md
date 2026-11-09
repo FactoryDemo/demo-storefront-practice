@@ -18,6 +18,8 @@
    `{"timestamp":"...","level":"info","message":"health check",...}`.
 
 No accounts, credentials, or environment variables are required.
+Telemetry (PostHog, Grafana Cloud) is optional and off unless its variables
+are set; see `.env.example` and `docs/runbooks/observability.md`.
 
 ## Common failures
 

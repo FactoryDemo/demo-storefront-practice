@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  ANALYTICS_EVENTS,
+  cartProperties,
+  orderProperties,
+} from "../lib/analytics";
 import { formatCurrency } from "../lib/currency";
 import {
   MAX_NAME_LENGTH,
@@ -15,6 +20,7 @@ import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
 import { saveLastOrder } from "./lastOrder";
 import { OrderLines } from "./OrderLines";
+import { track } from "./posthog";
 
 type SubmitResult =
   { ok: true; order: Order } | { ok: false; errors: string[] };
@@ -22,6 +28,14 @@ type SubmitResult =
 export function Checkout() {
   const { items, isLoaded, clear } = useCart();
   const router = useRouter();
+  const startTracked = useRef(false);
+
+  useEffect(() => {
+    if (isLoaded && items.length > 0 && !startTracked.current) {
+      startTracked.current = true;
+      track(ANALYTICS_EVENTS.checkoutStarted, cartProperties(items));
+    }
+  }, [isLoaded, items]);
 
   if (!isLoaded) {
     return <p className="muted">Loading your cart…</p>;
@@ -40,6 +54,7 @@ export function Checkout() {
   const total = calculateCartTotal(items);
 
   function onPlaced(order: Order) {
+    track(ANALYTICS_EVENTS.orderPlaced, orderProperties(order));
     saveLastOrder(order);
     clear();
     router.push(`/orders/${order.id}`);
@@ -83,6 +98,7 @@ function CheckoutForm({ items, totalCents, onPlaced }: CheckoutFormProps) {
       onPlaced(result.order);
       return;
     }
+    track(ANALYTICS_EVENTS.orderFailed, { errorCount: result.errors.length });
     setErrors(result.errors);
     setIsSubmitting(false);
   }

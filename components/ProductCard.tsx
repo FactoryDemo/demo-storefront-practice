@@ -1,14 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import { ANALYTICS_EVENTS, productAddedProperties } from "../lib/analytics";
 import { formatCurrency } from "../lib/currency";
 import type { Product } from "../lib/types";
 import { useCart } from "./CartProvider";
+import { track } from "./posthog";
 
 export function ProductCard({ product }: { product: Product }) {
   const { items, addItem } = useCart();
   const inCart =
     items.find((item) => item.productId === product.id)?.quantity ?? 0;
+
+  function add() {
+    addItem(product.id);
+    track(
+      ANALYTICS_EVENTS.productAdded,
+      productAddedProperties(product.id, inCart + 1)
+    );
+  }
 
   return (
     <article className="product-card">
@@ -30,7 +40,7 @@ export function ProductCard({ product }: { product: Product }) {
           <button
             type="button"
             className="button button-secondary"
-            onClick={() => addItem(product.id)}
+            onClick={add}
           >
             Add to cart
           </button>

@@ -2,18 +2,24 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { buildOrder, validateOrderRequest } from "../../../lib/orders";
 import { logger } from "../../../server/logger";
+import {
+  recordOrderPlaced,
+  recordOrderRejected,
+  withTelemetry,
+} from "../../../server/telemetry";
 
 export const dynamic = "force-dynamic";
 
 const ROUTE = "/api/orders";
 
 /** Place a mock pickup order. Totals are recomputed here, never trusted. */
-export async function POST(request: Request): Promise<NextResponse> {
+export const POST = withTelemetry(ROUTE, async (request) => {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     logger.warn("order rejected", { route: ROUTE, reason: "invalid json" });
+    recordOrderRejected("invalid_json");
     return NextResponse.json(
       { errors: ["Request body must be JSON."] },
       { status: 400 }
@@ -23,6 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const result = validateOrderRequest(body);
   if (!result.ok) {
     logger.warn("order rejected", { route: ROUTE, errors: result.errors });
+    recordOrderRejected("validation");
     return NextResponse.json({ errors: result.errors }, { status: 400 });
   }
 
@@ -36,5 +43,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     lineCount: order.lines.length,
     totalCents: order.totalCents,
   });
+  recordOrderPlaced(order);
   return NextResponse.json(order, { status: 201 });
-}
+});
