@@ -1,10 +1,11 @@
 import type { PricedLine } from "./types";
+import { BULK_DISCOUNT_THRESHOLD } from "./discounts";
 
 export type Promotion = {
   /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
   code: string;
   description: string;
-  /** Cents off the order, given its lines after bulk pricing. */
+  /** Cents off the order, excluding bulk-priced lines (FIN-212). */
   discountCents(lines: PricedLine[]): number;
 };
 
@@ -12,12 +13,11 @@ export type Promotion = {
 export const PROMOTIONS: Promotion[] = [
   {
     code: "SAVE10",
-    description: "10% off order",
+    description: "10% off non-bulk items",
     discountCents: (lines) => {
-      const subtotal = lines.reduce(
-        (sum, line) => sum + line.lineTotalCents,
-        0
-      );
+      const subtotal = lines
+        .filter((line) => line.quantity < BULK_DISCOUNT_THRESHOLD)
+        .reduce((sum, line) => sum + line.lineTotalCents, 0);
       // Round the 10% discount to the nearest cent, with half cents up.
       return Math.floor((subtotal + 5) / 10);
     },

@@ -1,10 +1,9 @@
 import { getProduct } from "./products";
 import { findPromotion } from "./promotions";
 import type { CartItem, PricedLine, Product } from "./types";
+import { BULK_DISCOUNT_RATE, BULK_DISCOUNT_THRESHOLD } from "./discounts";
 
-/** Buy 3 or more of one item and that line is 10% off. */
-export const BULK_DISCOUNT_THRESHOLD = 3;
-export const BULK_DISCOUNT_RATE = 0.1;
+export { BULK_DISCOUNT_RATE, BULK_DISCOUNT_THRESHOLD } from "./discounts";
 
 /**
  * Total for a single cart line, in cents.
@@ -49,7 +48,8 @@ export function priceLines(items: CartItem[]): PricedLine[] {
  * Total for a whole cart, in cents: the sum of all line totals, less any
  * promo code discount. Bulk discounts apply per line; a mixed cart can have
  * discounted and undiscounted lines side by side. Unknown promo codes are
- * ignored, and the total never goes below zero.
+ * ignored, bulk-priced lines are excluded from promo discounts, and the total
+ * never goes below zero.
  */
 export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
   const lines = priceLines(items);

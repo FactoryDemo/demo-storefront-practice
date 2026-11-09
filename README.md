@@ -44,11 +44,13 @@ discounted and undiscounted lines at once — `tests/pricing.test.ts` pins
 the behavior down. Checkout re-prices every order on the server, so the
 browser never decides what an order costs.
 
-Enter **SAVE10** in the cart for 10% off the order after bulk discounts.
+Enter **SAVE10** in the cart for 10% off items that do not get bulk pricing.
+Promo codes never stack with the bulk discount (Finance rule FIN-212).
 Codes ignore case and surrounding spaces. The discount is rounded to the
-nearest cent (half cents round up), once on the order subtotal. For example,
+nearest cent (half cents round up), once on the eligible subtotal. For example,
 three Drip Coffees plus one Espresso cost $12.40 after bulk pricing, or
-$11.16 with SAVE10. The code stays with the cart through reloads and checkout;
+$12.10 with SAVE10: only the $2.95 Espresso gets a further $0.30 off.
+The code stays with the cart through reloads and checkout;
 remove it in the cart or place the order to clear it.
 
 ## Observability

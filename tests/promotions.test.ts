@@ -7,7 +7,7 @@ describe("findPromotion", () => {
     (code) => {
       expect(findPromotion(code)).toMatchObject({
         code: "SAVE10",
-        description: "10% off order",
+        description: "10% off non-bulk items",
       });
     }
   );
@@ -48,5 +48,21 @@ describe("findPromotion", () => {
       ])
     ).toBe(77);
     expect(findPromotion("SAVE10")?.discountCents([])).toBe(0);
+  });
+
+  it("excludes all bulk-priced lines before rounding the eligible subtotal", () => {
+    const bulkLines = [
+      { productId: "drip", quantity: 3, lineTotalCents: 945 },
+      { productId: "espresso", quantity: 4, lineTotalCents: 1062 },
+    ];
+    const promotion = findPromotion("SAVE10");
+    expect(promotion?.discountCents(bulkLines)).toBe(0);
+    expect(
+      promotion?.discountCents([
+        ...bulkLines,
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+        { productId: "latte", quantity: 1, lineTotalCents: 475 },
+      ])
+    ).toBe(77);
   });
 });

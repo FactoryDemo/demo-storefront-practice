@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getProduct } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -76,12 +77,26 @@ describe("calculateCartTotal", () => {
     }
   );
 
-  it("applies SAVE10 after per-line bulk discounts", () => {
+  it("never stacks promo codes with the bulk discount (FIN-212)", () => {
+    for (const promotion of PROMOTIONS) {
+      for (const quantity of [BULK_DISCOUNT_THRESHOLD, 4, 99]) {
+        const items = [{ productId: "espresso", quantity }];
+        expect(calculateCartTotal(items, promotion.code)).toBe(
+          calculateCartTotal(items)
+        );
+      }
+    }
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("applies SAVE10 only to non-bulk lines in a mixed cart", () => {
     const items: CartItem[] = [
       { productId: "drip", quantity: 3 }, // bulk: 945
       { productId: "espresso", quantity: 1 }, // 295
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
   });
 
   it("rounds the order discount to the nearest cent", () => {
@@ -90,7 +105,7 @@ describe("calculateCartTotal", () => {
     ).toBe(265);
     expect(
       calculateCartTotal([{ productId: "drip", quantity: 3 }], "SAVE10")
-    ).toBe(850);
+    ).toBe(945);
   });
 
   it("keeps an empty or invalid cart at zero with SAVE10", () => {
