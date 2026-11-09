@@ -71,3 +71,4 @@ yourself before pushing.
   `{"status":"ok"}`.
 - In CI: the E2E workflow asserts the same response against a production
   build, and the DAST workflow waits for it before scanning.
+
