@@ -48,9 +48,13 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent. `lib/promotions.ts` registers **SAVE10**, which takes another 10%
-   off the whole order after bulk pricing. The order discount is rounded
+   cent. Finance rule **FIN-212** forbids promo codes from stacking with
+   bulk discounts: `calculateCartTotal` excludes bulk-priced lines before
+   calling any promotion. `lib/promotions.ts` registers **SAVE10**, which
+   takes 10% off the remaining non-bulk subtotal. That discount is rounded
    once to the nearest cent (half cents round up), then subtracted.
+   For example, three Drip Coffees ($9.45 bulk-priced) plus one Espresso
+   ($2.95) total $12.10 with SAVE10, not $11.16.
    Promo codes ignore case and surrounding whitespace. The cart saves the
    applied code separately in localStorage and clears it after checkout.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only

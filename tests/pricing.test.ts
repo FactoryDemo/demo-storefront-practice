@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -67,14 +68,47 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
 
-  it("takes SAVE10 off the whole order after per-line bulk discounts", () => {
+  it("takes SAVE10 off only non-bulk lines in a mixed cart", () => {
     const items: CartItem[] = [
       { productId: "drip", quantity: 3 }, // bulk: 945
       { productId: "espresso", quantity: 1 }, // regular: 295
     ];
-    // $12.40 subtotal less $1.24 = $11.16.
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
-    expect(calculateCartTotal(items, "  save10  ")).toBe(1116);
+    // FIN-212: retain $9.45 bulk pricing; $2.95 less $0.30 = $2.65.
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateCartTotal(items, "  save10  ")).toBe(1210);
+  });
+
+  it.each(PRODUCTS)("never stacks promos on bulk-priced $id", (product) => {
+    for (const quantity of [3, 4, 99]) {
+      const items = [{ productId: product.id, quantity }];
+      for (const promotion of PROMOTIONS) {
+        expect(calculateCartTotal(items, promotion.code)).toBe(
+          calculateLineTotal(product, quantity)
+        );
+      }
+    }
+  });
+
+  it("keeps FIN-212's three Espressos at 797 cents with SAVE10", () => {
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("rounds once across eligible lines while leaving bulk lines unchanged", () => {
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "drip", quantity: 3 },
+          { productId: "espresso", quantity: 1 },
+          { productId: "latte", quantity: 1 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(1638); // 945 + 770 - 77
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 2 }], "SAVE10")
+    ).toBe(630);
   });
 
   it("rounds the order discount to the nearest cent", () => {
