@@ -48,7 +48,12 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent.
+   cent. `lib/promotions.ts` registers SAVE10: 10% off the combined subtotal
+   after bulk pricing. Its discount rounds once to the nearest cent (halves
+   up). `calculatePromotionDiscount` supplies the savings shown in the cart,
+   checkout, and confirmation; `calculateCartTotal` subtracts those savings.
+   The cart provider saves the applied code alongside the cart in
+   `localStorage` and clears both after checkout.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only
    place cents become a display string such as `$9.45`.
 
@@ -59,7 +64,7 @@ sequenceDiagram
   participant B as Browser (components/Checkout.tsx)
   participant R as POST /api/orders
   participant O as lib/orders.ts
-  B->>R: name, pickup slot, items
+  B->>R: name, pickup slot, items, optional promo code
   R->>O: validateOrderRequest
   O-->>R: errors, or a clean request
   R->>O: buildOrder (re-prices from the catalog)
@@ -72,7 +77,9 @@ sequenceDiagram
   again through `lib/pricing.ts`.
 - `validateOrderRequest` rejects blank or long names, unknown pickup slots,
   empty carts, unknown products, and quantities outside 1 to 99, and merges
-  repeated products into one line.
+  repeated products into one line. It also normalizes optional promo codes
+  and rejects unknown codes or non-string values. `buildOrder` re-applies
+  the validated code and includes it in the order.
 - Orders are not stored. The confirmation page (`app/orders/[id]/page.tsx`)
   reads the last order from `sessionStorage` in the same tab.
 

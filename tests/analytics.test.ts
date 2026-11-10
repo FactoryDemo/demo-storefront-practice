@@ -60,6 +60,18 @@ describe("productAddedProperties", () => {
 });
 
 describe("cartProperties", () => {
+  it("reports the discounted cart total when a promo is applied", () => {
+    expect(
+      cartProperties(
+        [
+          { productId: "drip", quantity: 3 },
+          { productId: "espresso", quantity: 1 },
+        ],
+        "SAVE10"
+      )
+    ).toEqual({ lineCount: 2, itemCount: 4, totalCents: 1116 });
+  });
+
   it("counts lines and items and prices the cart with the bulk discount", () => {
     expect(
       cartProperties([

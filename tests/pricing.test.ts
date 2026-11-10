@@ -66,6 +66,44 @@ describe("calculateCartTotal", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
+
+  it("takes SAVE10 off the whole order after per-line bulk discounts", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // 295
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
+    expect(calculateCartTotal(items, "  save10  ")).toBe(1116);
+    expect(calculateCartTotal(items)).toBe(1240);
+  });
+
+  it("rounds the order discount once, not per line", () => {
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "espresso", quantity: 1 },
+          { productId: "cold-brew", quantity: 1 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(648);
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")
+    ).toBe(265);
+  });
+
+  it("handles empty, zero-quantity, and unknown-product lines with SAVE10", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "drip", quantity: 0 },
+          { productId: "unknown", quantity: 3 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(0);
+  });
 });
 
 describe("formatCurrency", () => {
