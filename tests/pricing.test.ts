@@ -66,6 +66,54 @@ describe("calculateCartTotal", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
+
+  it.each(["SAVE10", "save10", "  SaVe10  "])(
+    "takes 10%% off the whole order with %s",
+    (promoCode) => {
+      expect(
+        calculateCartTotal(
+          [
+            { productId: "espresso", quantity: 1 }, // 295
+            { productId: "latte", quantity: 1 }, // 475
+          ],
+          promoCode
+        )
+      ).toBe(693); // 770 - 77, not a separately rounded discount per line.
+    }
+  );
+
+  it("applies SAVE10 after bulk discounts without changing line prices", () => {
+    const items = [
+      { productId: "drip", quantity: 3 }, // 945 after bulk pricing
+      { productId: "espresso", quantity: 1 }, // 295
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1116); // 1240 - 124
+    expect(calculateLineTotal(getProduct("drip"), 3)).toBe(945);
+    expect(calculateCartTotal(items)).toBe(1240);
+  });
+
+  it("rounds the order discount to the nearest cent", () => {
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")
+    ).toBe(265); // 295 - 30 (29.5 cents off rounds up).
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 3 }], "SAVE10")
+    ).toBe(850); // 945 - 95 (94.5 cents off rounds up).
+  });
+
+  it("keeps an empty or invalid cart at zero with SAVE10", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "does-not-exist", quantity: 3 },
+          { productId: "drip", quantity: 0 },
+          { productId: "espresso", quantity: -1 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(0);
+  });
 });
 
 describe("formatCurrency", () => {

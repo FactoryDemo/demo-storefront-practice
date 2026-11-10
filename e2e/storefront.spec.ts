@@ -128,3 +128,154 @@ test("GET /api/health returns ok", async ({ request }) => {
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: "ok" });
 });
+
+test("SAVE10 survives reload and checkout, then clears for a new order", async ({
+  page,
+}) => {
+  await openStorefront(page);
+  await addToCart(page, "Drip Coffee", 3);
+  await addToCart(page, "Espresso");
+  let cart = await openCart(page);
+  await cart.getByLabel("Promo code", { exact: true }).fill("  save10  ");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.getByRole("status")).toHaveText(
+    "SAVE10 applied · 10% off the order"
+  );
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-line-total").first()).toHaveText("$9.45");
+
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code", { exact: true })).toHaveValue(
+    "SAVE10"
+  );
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await cart.getByRole("link", { name: "Checkout" }).click();
+  await expect(page.locator(".checkout-summary")).toContainText(
+    "SAVE10 · 10% off the order"
+  );
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await page.reload();
+  await page.getByLabel("Name for the order").fill("Ada");
+  const placed = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/orders") &&
+      response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  const response = await placed;
+  expect(response.status()).toBe(201);
+  expect(await response.json()).toMatchObject({
+    promoCode: "SAVE10",
+    totalCents: 1116,
+  });
+  await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
+  await expect(page.locator(".order-lines")).toContainText(
+    "SAVE10 · 10% off the order"
+  );
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await page.reload();
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+
+  await page.getByRole("link", { name: "Start a new order" }).click();
+  await addToCart(page, "Espresso");
+  cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code", { exact: true })).toHaveValue("");
+  await expect(cart.locator(".cart-total")).toContainText("$2.95");
+  await expect(cart.getByRole("status")).toHaveCount(0);
+});
+
+test("promo codes can be rejected, reapplied, and removed as quantities change", async ({
+  page,
+}) => {
+  await openStorefront(page);
+  await addToCart(page, "Latte", 2);
+  const cart = await openCart(page);
+  const input = cart.getByLabel("Promo code", { exact: true });
+  const apply = cart.getByRole("button", { name: "Apply", exact: true });
+  await input.fill("SAVE100");
+  await apply.click();
+  await expect(cart.getByRole("alert")).toHaveText(
+    "Promo code not recognized."
+  );
+  await expect(input).toHaveAttribute("aria-invalid", "true");
+  await expect(cart.locator(".cart-total")).toContainText("$9.50");
+
+  await input.fill("SAVE10");
+  await apply.click();
+  await expect(cart.getByRole("alert")).toHaveCount(0);
+  await expect(cart.locator(".cart-total")).toContainText("$8.55");
+  await apply.click();
+  await expect(cart.locator(".cart-total")).toContainText("$8.55");
+  await cart.getByRole("button", { name: "Add one Latte" }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$11.55");
+  await cart.getByRole("button", { name: "Remove one Latte" }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$8.55");
+
+  await input.fill("NOT-A-CODE");
+  await apply.click();
+  await expect(cart.getByRole("alert")).toBeVisible();
+  await expect(cart.getByRole("status")).toContainText("SAVE10 applied");
+  await expect(cart.locator(".cart-total")).toContainText("$8.55");
+  await cart.getByRole("button", { name: "Remove promo code" }).click();
+  await expect(input).toHaveValue("");
+  await expect(cart.getByRole("alert")).toHaveCount(0);
+  await expect(cart.getByRole("status")).toHaveCount(0);
+  await expect(cart.locator(".cart-total")).toContainText("$9.50");
+  await apply.click();
+  await expect(cart.getByRole("alert")).toBeVisible();
+  await expect(cart.locator(".cart-total")).toContainText("$9.50");
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await openCart(page);
+  await expect(input).toHaveValue("");
+  await expect(cart.locator(".cart-total")).toContainText("$9.50");
+});
+
+test("an inactive stored promo code does not discount the cart", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("bean-and-byte:promo-code", "EXPIRED");
+  });
+  await openStorefront(page);
+  await addToCart(page, "Espresso");
+  const cart = await openCart(page);
+  await expect(cart.getByLabel("Promo code", { exact: true })).toHaveValue("");
+  await expect(cart.locator(".cart-total")).toContainText("$2.95");
+});
+
+test("the orders API validates SAVE10 and calculates its own discount", async ({
+  request,
+}) => {
+  const payload = {
+    name: "Ada",
+    pickup: "asap",
+    items: [
+      { productId: "drip", quantity: 1 },
+      { productId: "drip", quantity: 2 },
+      { productId: "espresso", quantity: 1 },
+    ],
+    promoCode: " save10 ",
+    totalCents: 1,
+    discountCents: 1239,
+  };
+  const placed = await request.post("/api/orders", { data: payload });
+  expect(placed.status()).toBe(201);
+  expect(await placed.json()).toMatchObject({
+    promoCode: "SAVE10",
+    totalCents: 1116,
+    lines: [
+      { productId: "drip", quantity: 3, lineTotalCents: 945 },
+      { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+    ],
+  });
+  for (const promoCode of ["SAVE100", 10, null, ["SAVE10"]]) {
+    const rejected = await request.post("/api/orders", {
+      data: { ...payload, promoCode },
+    });
+    expect(rejected.status()).toBe(400);
+    expect((await rejected.json()).errors).toHaveLength(1);
+  }
+});

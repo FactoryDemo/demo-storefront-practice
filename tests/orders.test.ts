@@ -97,6 +97,37 @@ describe("validateOrderRequest", () => {
       { productId: "espresso", quantity: 1 },
     ]);
   });
+
+  it("normalizes an optional promo code", () => {
+    expect(
+      validateOrderRequest({ ...VALID, promoCode: "  save10  " })
+    ).toEqual({
+      ok: true,
+      request: { ...VALID, promoCode: "SAVE10" },
+    });
+  });
+
+  it.each(["", "   "])("treats a blank promo code as absent", (promoCode) => {
+    expect(validateOrderRequest({ ...VALID, promoCode })).toEqual({
+      ok: true,
+      request: VALID,
+    });
+  });
+
+  it("rejects unknown promo codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "SAVE100" })).toEqual([
+      "Promo code not recognized.",
+    ]);
+  });
+
+  it.each([null, 10, true, ["SAVE10"], { code: "SAVE10" }])(
+    "rejects a non-string promo code: %j",
+    (promoCode) => {
+      expect(errorsFor({ ...VALID, promoCode })).toEqual([
+        "Enter a valid promo code.",
+      ]);
+    }
+  );
 });
 
 describe("buildOrder", () => {
@@ -123,6 +154,37 @@ describe("buildOrder", () => {
       ],
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
+    });
+  });
+
+  it("re-prices a promo order after merging lines and ignores client totals", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      items: [
+        { productId: "drip", quantity: 1 },
+        { productId: "drip", quantity: 2 },
+        { productId: "espresso", quantity: 1 },
+      ],
+      promoCode: " save10 ",
+      totalCents: 1,
+      discountCents: 1239,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("Expected a valid promo order.");
+    }
+    const order = buildOrder(
+      result.request,
+      "BB-SAVE10",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order).toMatchObject({
+      promoCode: "SAVE10",
+      totalCents: 1116,
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
     });
   });
 });

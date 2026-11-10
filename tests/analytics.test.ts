@@ -76,6 +76,18 @@ describe("cartProperties", () => {
       totalCents: 0,
     });
   });
+
+  it("reports the discounted cart total without recording the code", () => {
+    expect(
+      cartProperties(
+        [
+          { productId: "drip", quantity: 3 },
+          { productId: "espresso", quantity: 1 },
+        ],
+        "SAVE10"
+      )
+    ).toEqual({ lineCount: 2, itemCount: 4, totalCents: 1116 });
+  });
 });
 
 describe("orderProperties", () => {

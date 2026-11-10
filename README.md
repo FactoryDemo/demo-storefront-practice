@@ -44,6 +44,13 @@ discounted and undiscounted lines at once — `tests/pricing.test.ts` pins
 the behavior down. Checkout re-prices every order on the server, so the
 browser never decides what an order costs.
 
+Apply **SAVE10** in the cart for another 10% off the order after bulk
+discounts. Codes ignore case and surrounding spaces. The order discount is
+rounded once to the nearest cent, then subtracted from the subtotal.
+For example, three Drip Coffees and one Espresso total $12.40 after bulk
+pricing, or **$11.16** with SAVE10. The code stays with the cart through
+reloads and checkout and clears when the order is placed.
+
 ## Observability
 
 Deployed on Vercel, the storefront reports product analytics, feature

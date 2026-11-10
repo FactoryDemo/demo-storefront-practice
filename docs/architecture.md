@@ -48,7 +48,10 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent.
+   cent. `lib/promotions.ts` registers SAVE10: 10% off the whole order after
+   bulk pricing, with the discount rounded once to the nearest cent.
+   The cart stores the applied code separately in `localStorage`; clearing
+   the cart after checkout also clears the code.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only
    place cents become a display string such as `$9.45`.
 
@@ -59,7 +62,7 @@ sequenceDiagram
   participant B as Browser (components/Checkout.tsx)
   participant R as POST /api/orders
   participant O as lib/orders.ts
-  B->>R: name, pickup slot, items
+  B->>R: name, pickup slot, items, optional promo code
   R->>O: validateOrderRequest
   O-->>R: errors, or a clean request
   R->>O: buildOrder (re-prices from the catalog)
@@ -69,10 +72,14 @@ sequenceDiagram
 ```
 
 - The server never trusts client totals: `buildOrder` prices every line
-  again through `lib/pricing.ts`.
+  again through `lib/pricing.ts`, including the validated promo code. The
+  order carries its normalized code to the confirmation page.
 - `validateOrderRequest` rejects blank or long names, unknown pickup slots,
   empty carts, unknown products, and quantities outside 1 to 99, and merges
   repeated products into one line.
+- Promo codes are optional and normalized without case or surrounding
+  whitespace. Blank codes mean no promotion; unknown codes and non-string
+  values are rejected.
 - Orders are not stored. The confirmation page (`app/orders/[id]/page.tsx`)
   reads the last order from `sessionStorage` in the same tab.
 

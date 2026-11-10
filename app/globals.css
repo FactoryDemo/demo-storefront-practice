@@ -497,6 +497,31 @@ main {
   color: var(--muted);
 }
 
+.promo-code,
+.promo-code form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-code form {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.promo-code .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.promo-code input {
+  width: 100%;
+}
+
+.promo-code .form-errors {
+  margin: 0;
+}
+
 .cart-total,
 .order-total {
   display: flex;
