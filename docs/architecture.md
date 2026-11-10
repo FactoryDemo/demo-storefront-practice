@@ -43,12 +43,17 @@ flowchart LR
    category and one `ProductCard` per product.
 2. **Cart.** `components/CartProvider.tsx` holds the cart as `CartItem[]`
    (product id and quantity) for every page and saves it in
-   `localStorage`. The quantity changes themselves are pure functions in
+   `localStorage`, along with the applied promo code. The quantity changes
+   themselves are pure functions in
    `lib/cart.ts`. Cart UI only changes quantities; it never computes money.
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent.
+   cent. The cart's promo code field accepts `SAVE10` (case-insensitive,
+   ignoring surrounding whitespace) for another 10% off the order after
+   bulk pricing. The promo discount is rounded once to the nearest cent
+   and subtracted from the subtotal. For example, three Drip Coffees and
+   one Espresso total $12.40 after bulk pricing, or $11.16 with `SAVE10`.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only
    place cents become a display string such as `$9.45`.
 
@@ -59,7 +64,7 @@ sequenceDiagram
   participant B as Browser (components/Checkout.tsx)
   participant R as POST /api/orders
   participant O as lib/orders.ts
-  B->>R: name, pickup slot, items
+  B->>R: name, pickup slot, items, optional promo code
   R->>O: validateOrderRequest
   O-->>R: errors, or a clean request
   R->>O: buildOrder (re-prices from the catalog)
@@ -69,10 +74,13 @@ sequenceDiagram
 ```
 
 - The server never trusts client totals: `buildOrder` prices every line
-  again through `lib/pricing.ts`.
+  again through `lib/pricing.ts` and applies the validated promo code.
+  The checkout summary and confirmation show the code and savings. Placing
+  an order clears both the cart and its code.
 - `validateOrderRequest` rejects blank or long names, unknown pickup slots,
   empty carts, unknown products, and quantities outside 1 to 99, and merges
-  repeated products into one line.
+  repeated products into one line. It rejects non-text and unknown promo
+  codes; omitted or blank codes mean no order-level discount.
 - Orders are not stored. The confirmation page (`app/orders/[id]/page.tsx`)
   reads the last order from `sessionStorage` in the same tab.
 

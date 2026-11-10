@@ -1,7 +1,7 @@
 import type { PricedLine } from "./types";
 
 export type Promotion = {
-  /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
+  /** Uppercase code a customer enters in the cart, e.g. "SAVE10". */
   code: string;
   description: string;
   /** Cents off the order, given its lines after bulk pricing. */
@@ -9,7 +9,20 @@ export type Promotion = {
 };
 
 /** Live promo codes. Matching is case-insensitive. */
-export const PROMOTIONS: Promotion[] = [];
+export const PROMOTIONS: Promotion[] = [
+  {
+    code: "SAVE10",
+    description: "10% off your order",
+    discountCents: (lines) => {
+      const subtotal = lines.reduce(
+        (sum, line) => sum + line.lineTotalCents,
+        0
+      );
+      // Round one tenth of the subtotal to whole cents, without a float rate.
+      return Math.floor((subtotal + 5) / 10);
+    },
+  },
+];
 
 export function findPromotion(code: string): Promotion | null {
   const normalized = code.trim().toUpperCase();

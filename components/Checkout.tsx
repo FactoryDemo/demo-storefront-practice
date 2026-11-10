@@ -13,6 +13,7 @@ import {
   MAX_NAME_LENGTH,
   PICKUP_SLOTS,
   type Order,
+  type OrderRequest,
   type PickupSlotId,
 } from "../lib/orders";
 import { calculateCartTotal, priceLines } from "../lib/pricing";
@@ -26,16 +27,16 @@ type SubmitResult =
   { ok: true; order: Order } | { ok: false; errors: string[] };
 
 export function Checkout() {
-  const { items, isLoaded, clear } = useCart();
+  const { items, isLoaded, clear, promoCode } = useCart();
   const router = useRouter();
   const startTracked = useRef(false);
 
   useEffect(() => {
     if (isLoaded && items.length > 0 && !startTracked.current) {
       startTracked.current = true;
-      track(ANALYTICS_EVENTS.checkoutStarted, cartProperties(items));
+      track(ANALYTICS_EVENTS.checkoutStarted, cartProperties(items, promoCode));
     }
-  }, [isLoaded, items]);
+  }, [isLoaded, items, promoCode]);
 
   if (!isLoaded) {
     return <p className="muted">Loading your cart…</p>;
@@ -51,7 +52,7 @@ export function Checkout() {
     );
   }
 
-  const total = calculateCartTotal(items);
+  const total = calculateCartTotal(items, promoCode);
 
   function onPlaced(order: Order) {
     track(ANALYTICS_EVENTS.orderPlaced, orderProperties(order));
@@ -64,11 +65,20 @@ export function Checkout() {
     <div className="checkout">
       <section className="checkout-panel" aria-labelledby="pickup-title">
         <h2 id="pickup-title">Pickup details</h2>
-        <CheckoutForm items={items} totalCents={total} onPlaced={onPlaced} />
+        <CheckoutForm
+          items={items}
+          promoCode={promoCode}
+          totalCents={total}
+          onPlaced={onPlaced}
+        />
       </section>
       <aside className="checkout-summary" aria-labelledby="summary-title">
         <h2 id="summary-title">Order summary</h2>
-        <OrderLines lines={priceLines(items)} totalCents={total} />
+        <OrderLines
+          lines={priceLines(items)}
+          totalCents={total}
+          promoCode={promoCode}
+        />
         <Link href="/" className="text-link">
           ← Keep shopping
         </Link>
@@ -79,11 +89,17 @@ export function Checkout() {
 
 type CheckoutFormProps = {
   items: CartItem[];
+  promoCode: string;
   totalCents: number;
   onPlaced: (order: Order) => void;
 };
 
-function CheckoutForm({ items, totalCents, onPlaced }: CheckoutFormProps) {
+function CheckoutForm({
+  items,
+  promoCode,
+  totalCents,
+  onPlaced,
+}: CheckoutFormProps) {
   const [name, setName] = useState("");
   const [pickup, setPickup] = useState<PickupSlotId>("asap");
   const [errors, setErrors] = useState<string[]>([]);
@@ -93,7 +109,7 @@ function CheckoutForm({ items, totalCents, onPlaced }: CheckoutFormProps) {
     event.preventDefault();
     setIsSubmitting(true);
     setErrors([]);
-    const result = await submitOrder({ name, pickup, items });
+    const result = await submitOrder({ name, pickup, items, promoCode });
     if (result.ok) {
       onPlaced(result.order);
       return;
@@ -156,11 +172,7 @@ function CheckoutForm({ items, totalCents, onPlaced }: CheckoutFormProps) {
   );
 }
 
-async function submitOrder(body: {
-  name: string;
-  pickup: PickupSlotId;
-  items: CartItem[];
-}): Promise<SubmitResult> {
+async function submitOrder(body: OrderRequest): Promise<SubmitResult> {
   try {
     const response = await fetch("/api/orders", {
       method: "POST",

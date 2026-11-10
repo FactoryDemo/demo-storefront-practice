@@ -17,9 +17,11 @@ import {
   parseStoredCart,
 } from "../lib/cart";
 import type { CartItem } from "../lib/types";
+import { findPromotion } from "../lib/promotions";
 import { track } from "./posthog";
 
 const STORAGE_KEY = "bean-and-byte:cart";
+const PROMO_STORAGE_KEY = "bean-and-byte:promo-code";
 
 type CartContextValue = {
   items: CartItem[];
@@ -27,6 +29,9 @@ type CartContextValue = {
   /** False until the saved cart has been read from localStorage. */
   isLoaded: boolean;
   isOpen: boolean;
+  promoCode: string;
+  applyPromoCode: (code: string) => boolean;
+  removePromoCode: () => void;
   addItem: (productId: string) => void;
   changeQuantity: (productId: string, delta: number) => void;
   clear: () => void;
@@ -41,9 +46,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
 
   useEffect(() => {
     setItems(parseStoredCart(window.localStorage.getItem(STORAGE_KEY)));
+    const savedCode = window.localStorage.getItem(PROMO_STORAGE_KEY);
+    setPromoCode(savedCode ? (findPromotion(savedCode)?.code ?? "") : "");
     setIsLoaded(true);
   }, []);
 
@@ -51,8 +59,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Writing before the first read would wipe the saved cart.
     if (isLoaded) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      window.localStorage.setItem(PROMO_STORAGE_KEY, promoCode);
     }
-  }, [items, isLoaded]);
+  }, [items, isLoaded, promoCode]);
 
   const addItem = useCallback((productId: string) => {
     setItems((current) => addCartItem(current, productId));
@@ -62,22 +71,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) => changeCartQuantity(current, productId, delta));
   }, []);
 
+  const applyPromoCode = useCallback((code: string): boolean => {
+    const promotion = findPromotion(code);
+    if (!promotion) {
+      return false;
+    }
+    setPromoCode(promotion.code);
+    return true;
+  }, []);
+
   const value = useMemo<CartContextValue>(
     () => ({
       items,
       itemCount: countItems(items),
       isLoaded,
       isOpen,
+      promoCode,
+      applyPromoCode,
+      removePromoCode: () => setPromoCode(""),
       addItem,
       changeQuantity,
-      clear: () => setItems([]),
+      clear: () => {
+        setItems([]);
+        setPromoCode("");
+      },
       openCart: () => {
         setIsOpen(true);
-        track(ANALYTICS_EVENTS.cartOpened, cartProperties(items));
+        track(ANALYTICS_EVENTS.cartOpened, cartProperties(items, promoCode));
       },
       closeCart: () => setIsOpen(false),
     }),
-    [items, isLoaded, isOpen, addItem, changeQuantity]
+    [
+      items,
+      isLoaded,
+      isOpen,
+      promoCode,
+      applyPromoCode,
+      addItem,
+      changeQuantity,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

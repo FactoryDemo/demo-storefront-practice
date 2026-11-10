@@ -97,6 +97,35 @@ describe("validateOrderRequest", () => {
       { productId: "espresso", quantity: 1 },
     ]);
   });
+
+  it("normalizes a recognized promo code", () => {
+    expect(validateOrderRequest({ ...VALID, promoCode: "  save10 " })).toEqual({
+      ok: true,
+      request: { ...VALID, promoCode: "SAVE10" },
+    });
+  });
+
+  it.each(["", "   "])("accepts %j as no promo code", (promoCode) => {
+    expect(validateOrderRequest({ ...VALID, promoCode })).toEqual({
+      ok: true,
+      request: VALID,
+    });
+  });
+
+  it("rejects an unknown promo code instead of silently charging full price", () => {
+    expect(errorsFor({ ...VALID, promoCode: "SAVE100" })).toEqual([
+      "Promo code is not recognized.",
+    ]);
+  });
+
+  it.each([null, 10, true, ["SAVE10"], { code: "SAVE10" }])(
+    "rejects a non-text promo code %j",
+    (promoCode) => {
+      expect(errorsFor({ ...VALID, promoCode })).toEqual([
+        "Promo code must be text.",
+      ]);
+    }
+  );
 });
 
 describe("buildOrder", () => {
@@ -123,6 +152,37 @@ describe("buildOrder", () => {
       ],
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
+    });
+  });
+
+  it("re-prices a validated promo order and ignores supplied prices", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      promoCode: " save10 ",
+      totalCents: 1,
+      discountCents: 999999,
+      items: [
+        { productId: "drip", quantity: 1, priceCents: 1 },
+        { productId: "drip", quantity: 2, lineTotalCents: 1 },
+        { productId: "espresso", quantity: 1 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("Expected a valid promo order");
+    }
+    const order = buildOrder(
+      result.request,
+      "BB-PROMO1",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order).toMatchObject({
+      promoCode: "SAVE10",
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
+      totalCents: 1116,
     });
   });
 });

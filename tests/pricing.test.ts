@@ -3,6 +3,7 @@ import { getProduct } from "../lib/products";
 import {
   calculateCartTotal,
   calculateLineTotal,
+  calculatePromoDiscount,
   BULK_DISCOUNT_THRESHOLD,
 } from "../lib/pricing";
 import { formatCurrency } from "../lib/currency";
@@ -66,6 +67,77 @@ describe("calculateCartTotal", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
+
+  it.each(["SAVE10", "save10", "  SaVe10  "])(
+    "takes 10%% off the whole order with %j",
+    (promoCode) => {
+      expect(
+        calculateCartTotal(
+          [
+            { productId: "espresso", quantity: 1 }, // 295
+            { productId: "latte", quantity: 2 }, // 950
+          ],
+          promoCode
+        )
+      ).toBe(1120); // 1245 - 125, rounded once
+    }
+  );
+
+  it("applies SAVE10 after bulk pricing, without changing the lines", () => {
+    const items = [
+      { productId: "drip", quantity: 3 },
+      { productId: "espresso", quantity: 1 },
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1116); // 1240 - 124
+    expect(calculateLineTotal(getProduct("drip"), 3)).toBe(945);
+  });
+
+  it.each([
+    [1, 315],
+    [2, 630],
+    [3, 850],
+  ])("recalculates SAVE10 for %i drip coffees", (quantity, total) => {
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity }], "SAVE10")
+    ).toBe(total);
+  });
+
+  it("only discounts valid positive-quantity lines", () => {
+    expect(
+      calculateCartTotal(
+        [
+          { productId: "espresso", quantity: 1 },
+          { productId: "missing", quantity: 3 },
+          { productId: "drip", quantity: 0 },
+          { productId: "latte", quantity: -1 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(265);
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+  });
+
+  it("leaves the cart unchanged for a blank promo code", () => {
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 3 }], "  ")
+    ).toBe(945);
+  });
+});
+
+describe("calculatePromoDiscount", () => {
+  const lines = [{ productId: "drip", quantity: 3, lineTotalCents: 945 }];
+
+  it("returns the rounded savings on already priced lines", () => {
+    expect(calculatePromoDiscount(lines, "SAVE10")).toBe(95);
+    expect(calculatePromoDiscount([], "SAVE10")).toBe(0);
+  });
+
+  it.each([undefined, "", "unknown"])(
+    "returns no savings for %j",
+    (promoCode) => {
+      expect(calculatePromoDiscount(lines, promoCode)).toBe(0);
+    }
+  );
 });
 
 describe("formatCurrency", () => {

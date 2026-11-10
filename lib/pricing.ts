@@ -54,11 +54,20 @@ export function priceLines(items: CartItem[]): PricedLine[] {
 export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
   const lines = priceLines(items);
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  return subtotal - calculatePromoDiscount(lines, promoCode);
+}
+
+/** Order-level savings in cents, applied after bulk pricing. */
+export function calculatePromoDiscount(
+  lines: PricedLine[],
+  promoCode?: string
+): number {
   const promotion = promoCode ? findPromotion(promoCode) : null;
   if (!promotion) {
-    return subtotal;
+    return 0;
   }
-  return Math.max(0, subtotal - promotion.discountCents(lines));
+  const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  return Math.min(subtotal, Math.max(0, promotion.discountCents(lines)));
 }
 
 function safeLookup(id: string): Product | null {
