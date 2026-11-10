@@ -497,6 +497,17 @@ main {
   color: var(--muted);
 }
 
+@media (max-height: 600px) {
+  .cart-drawer {
+    overflow-y: auto;
+  }
+
+  .cart-lines {
+    flex-shrink: 0;
+    overflow-y: visible;
+  }
+}
+
 .promo-form {
   display: flex;
   flex-direction: column;
