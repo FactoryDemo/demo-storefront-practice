@@ -10,7 +10,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [opened, edited]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
 
 jobs:
   droid:
@@ -19,7 +19,7 @@ jobs:
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@droid')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@droid')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@droid') || contains(github.event.issue.title, '@droid'))) ||
-      (github.event_name == 'pull_request' && (contains(github.event.pull_request.body, '@droid') || contains(github.event.pull_request.title, '@droid')))
+      (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited') && (contains(github.event.pull_request.body, '@droid') || contains(github.event.pull_request.title, '@droid')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,3 +36,62 @@ jobs:
         uses: Factory-AI/droid-action@main
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
+
+  # Starts with the pull request but reviews only once CI's test job, which
+  # includes Finance's checkout rules, has passed on the same commit. A red
+  # pull request gets no review until it is fixed.
+  code-review:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'edited' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: droid-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+      checks: read
+    steps:
+      - name: Wait for CI test job
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for attempt in $(seq 1 60); do
+            result=$(gh api "repos/$REPO/commits/$SHA/check-runs?check_name=test" \
+              --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
+            set -- $result
+            echo "test check: status=$1 conclusion=$2"
+            if [ "$1" = "completed" ]; then
+              echo "conclusion=$2" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "conclusion=timed_out" >> "$GITHUB_OUTPUT"
+      - name: Skip review because CI test did not pass
+        if: steps.ci.outputs.conclusion != 'success'
+        run: echo "::notice::CI test finished as '${{ steps.ci.outputs.conclusion }}', so Droid review is skipped until a new push passes."
+      - name: Checkout repository
+        if: steps.ci.outputs.conclusion == 'success'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - name: Run Droid Auto Review
+        if: steps.ci.outputs.conclusion == 'success'
+        uses: Factory-AI/droid-action@main
+        with:
+          factory_api_key: ${{ secrets.FACTORY_API_KEY }}
+          automatic_review: true
+          automatic_security_review: true
+          review_depth: deep
+          allowed_bots: factory-droid
