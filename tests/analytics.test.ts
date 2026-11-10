@@ -69,7 +69,7 @@ describe("cartProperties", () => {
         ],
         "SAVE10"
       )
-    ).toEqual({ lineCount: 2, itemCount: 4, totalCents: 1116 });
+    ).toEqual({ lineCount: 2, itemCount: 4, totalCents: 1210 });
   });
 
   it("counts lines and items and prices the cart with the bulk discount", () => {

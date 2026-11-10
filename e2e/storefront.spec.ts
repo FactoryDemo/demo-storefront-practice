@@ -114,8 +114,8 @@ test("SAVE10 survives reloads, checkout, and confirmation, then clears", async (
   await expect(cart.getByRole("status")).toContainText(
     "SAVE10 · 10% off the order"
   );
-  await expect(cart.getByRole("status")).toContainText("−$1.24");
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.getByRole("status")).toContainText("−$0.30");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await expect(cart.locator(".cart-line-total").first()).toHaveText("$9.45");
 
   await page.reload();
@@ -124,9 +124,9 @@ test("SAVE10 survives reloads, checkout, and confirmation, then clears", async (
   await expect(cart.getByLabel("Promo code", { exact: true })).toHaveValue(
     "SAVE10"
   );
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await cart.getByRole("link", { name: "Checkout" }).click();
-  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
   await page.reload();
   await expect(page.getByRole("status")).toContainText("SAVE10");
   await page.getByLabel("Name for the order").fill("Ada");
@@ -135,16 +135,16 @@ test("SAVE10 survives reloads, checkout, and confirmation, then clears", async (
       response.url().endsWith("/api/orders") &&
       response.request().method() === "POST"
   );
-  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  await page.getByRole("button", { name: "Place order · $12.10" }).click();
   const response = await responsePromise;
   expect(response.status()).toBe(201);
   expect(await response.json()).toMatchObject({
     promoCode: "SAVE10",
-    totalCents: 1116,
+    totalCents: 1210,
   });
   await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
-  await expect(page.locator(".order-total")).toContainText("$11.16");
-  await expect(page.getByRole("status")).toContainText("−$1.24");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
+  await expect(page.getByRole("status")).toContainText("−$0.30");
   await page.reload();
   await expect(page.getByRole("status")).toContainText("SAVE10");
 
@@ -174,8 +174,8 @@ test("promo validation, reapplication, quantity changes, and removal", async ({
   await cart.getByRole("button", { name: "Apply", exact: true }).click();
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
   await cart.getByRole("button", { name: "Add one Drip Coffee" }).click();
-  await expect(cart.locator(".cart-total")).toContainText("$8.50");
-  await expect(cart.getByRole("status")).toContainText("−$0.95");
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
+  await expect(cart.getByRole("status")).toContainText("−$0.00");
   await cart.getByRole("button", { name: "Remove one Drip Coffee" }).click();
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
   await code.fill("NOT-A-CODE");
@@ -227,7 +227,7 @@ test("POST /api/orders validates SAVE10 and ignores supplied discounts", async (
   expect(placed.status()).toBe(201);
   expect(await placed.json()).toMatchObject({
     promoCode: "SAVE10",
-    totalCents: 1116,
+    totalCents: 1210,
   });
 
   for (const promoCode of ["NOT-A-CODE", 10, null, ["SAVE10"]]) {

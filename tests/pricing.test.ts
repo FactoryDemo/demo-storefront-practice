@@ -3,8 +3,11 @@ import { getProduct } from "../lib/products";
 import {
   calculateCartTotal,
   calculateLineTotal,
+  calculatePromotionDiscount,
   BULK_DISCOUNT_THRESHOLD,
 } from "../lib/pricing";
+import { PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import { formatCurrency } from "../lib/currency";
 import type { CartItem } from "../lib/types";
 
@@ -67,14 +70,36 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
 
-  it("takes SAVE10 off the whole order after per-line bulk discounts", () => {
+  it("applies SAVE10 only to lines without a bulk discount", () => {
     const items: CartItem[] = [
       { productId: "drip", quantity: 3 }, // bulk: 945
       { productId: "espresso", quantity: 1 }, // 295
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
-    expect(calculateCartTotal(items, "  save10  ")).toBe(1116);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateCartTotal(items, "  save10  ")).toBe(1210);
     expect(calculateCartTotal(items)).toBe(1240);
+  });
+
+  it("never stacks any registered promotion with bulk pricing", () => {
+    for (const product of PRODUCTS) {
+      for (const promotion of PROMOTIONS) {
+        for (const quantity of [3, 4, 99]) {
+          const items = [{ productId: product.id, quantity }];
+          expect(calculateCartTotal(items, promotion.code)).toBe(
+            calculateCartTotal(items)
+          );
+        }
+      }
+    }
+  });
+
+  it("keeps displayed savings at zero for an all-bulk order", () => {
+    expect(
+      calculatePromotionDiscount(
+        [{ productId: "espresso", quantity: 3, lineTotalCents: 797 }],
+        "SAVE10"
+      )
+    ).toBe(0);
   });
 
   it("rounds the order discount once, not per line", () => {

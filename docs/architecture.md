@@ -49,8 +49,10 @@ flowchart LR
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
    cent. `lib/promotions.ts` registers SAVE10: 10% off the combined subtotal
-   after bulk pricing. Its discount rounds once to the nearest cent (halves
-   up). `calculatePromotionDiscount` supplies the savings shown in the cart,
+   of non-bulk lines. `calculatePromotionDiscount` excludes bulk-priced lines
+   from every promo (FIN-212), so the two discounts never stack on a line.
+   The promo discount rounds once to the nearest cent (halves up).
+   `calculatePromotionDiscount` supplies the savings shown in the cart,
    checkout, and confirmation; `calculateCartTotal` subtracts those savings.
    The cart provider saves the applied code alongside the cart in
    `localStorage` and clears both after checkout.
