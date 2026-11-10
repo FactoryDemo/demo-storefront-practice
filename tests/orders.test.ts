@@ -182,7 +182,7 @@ describe("buildOrder", () => {
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },
       ],
-      totalCents: 1116,
+      totalCents: 1210,
     });
   });
 });

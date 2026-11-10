@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -83,23 +84,40 @@ describe("calculateCartTotal", () => {
     }
   );
 
-  it("applies SAVE10 after bulk pricing, without changing the lines", () => {
+  it("applies SAVE10 only to non-bulk lines in a mixed cart", () => {
     const items = [
       { productId: "drip", quantity: 3 },
       { productId: "espresso", quantity: 1 },
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116); // 1240 - 124
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210); // 945 + 295 - 30
     expect(calculateLineTotal(getProduct("drip"), 3)).toBe(945);
   });
 
   it.each([
     [1, 315],
     [2, 630],
-    [3, 850],
+    [3, 945],
   ])("recalculates SAVE10 for %i drip coffees", (quantity, total) => {
     expect(
       calculateCartTotal([{ productId: "drip", quantity }], "SAVE10")
     ).toBe(total);
+  });
+
+  it("never stacks any promo with bulk pricing for any catalog product", () => {
+    // FIN-212: Finance's checkout rule, including the rounded Espresso case.
+    for (const product of PRODUCTS) {
+      for (const quantity of [3, 4, 99]) {
+        const items = [{ productId: product.id, quantity }];
+        for (const promotion of PROMOTIONS) {
+          expect(calculateCartTotal(items, promotion.code)).toBe(
+            calculateCartTotal(items)
+          );
+        }
+      }
+    }
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
   });
 
   it("only discounts valid positive-quantity lines", () => {
@@ -127,9 +145,22 @@ describe("calculateCartTotal", () => {
 describe("calculatePromoDiscount", () => {
   const lines = [{ productId: "drip", quantity: 3, lineTotalCents: 945 }];
 
-  it("returns the rounded savings on already priced lines", () => {
-    expect(calculatePromoDiscount(lines, "SAVE10")).toBe(95);
+  it("does not discount bulk-priced lines", () => {
+    expect(calculatePromoDiscount(lines, "SAVE10")).toBe(0);
     expect(calculatePromoDiscount([], "SAVE10")).toBe(0);
+  });
+
+  it("rounds once across eligible lines while excluding bulk lines", () => {
+    expect(
+      calculatePromoDiscount(
+        [
+          ...lines,
+          { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+          { productId: "latte", quantity: 1, lineTotalCents: 475 },
+        ],
+        "SAVE10"
+      )
+    ).toBe(77);
   });
 
   it.each([undefined, "", "unknown"])(
