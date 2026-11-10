@@ -48,8 +48,9 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent. `lib/promotions.ts` registers SAVE10: 10% off the whole order after
-   bulk pricing, with the discount rounded once to the nearest cent.
+   cent. `lib/promotions.ts` registers SAVE10: 10% off non-bulk lines, with
+   the discount rounded once to the nearest cent. `calculateCartTotal`
+   excludes bulk-priced lines from every promo discount (FIN-212).
    The cart stores the applied code separately in `localStorage`; clearing
    the cart after checkout also clears the code.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only

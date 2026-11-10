@@ -82,12 +82,12 @@ describe("calculateCartTotal", () => {
     }
   );
 
-  it("applies SAVE10 after bulk discounts without changing line prices", () => {
+  it("applies SAVE10 only to non-bulk lines without changing line prices", () => {
     const items = [
       { productId: "drip", quantity: 3 }, // 945 after bulk pricing
       { productId: "espresso", quantity: 1 }, // 295
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116); // 1240 - 124
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210); // 1240 - 30
     expect(calculateLineTotal(getProduct("drip"), 3)).toBe(945);
     expect(calculateCartTotal(items)).toBe(1240);
   });
@@ -97,8 +97,8 @@ describe("calculateCartTotal", () => {
       calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")
     ).toBe(265); // 295 - 30 (29.5 cents off rounds up).
     expect(
-      calculateCartTotal([{ productId: "drip", quantity: 3 }], "SAVE10")
-    ).toBe(850); // 945 - 95 (94.5 cents off rounds up).
+      calculateCartTotal([{ productId: "drip", quantity: 2 }], "SAVE10")
+    ).toBe(630); // 700 - 70.
   });
 
   it("keeps an empty or invalid cart at zero with SAVE10", () => {

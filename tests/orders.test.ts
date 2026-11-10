@@ -180,7 +180,7 @@ describe("buildOrder", () => {
     );
     expect(order).toMatchObject({
       promoCode: "SAVE10",
-      totalCents: 1116,
+      totalCents: 1210,
       lines: [
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },

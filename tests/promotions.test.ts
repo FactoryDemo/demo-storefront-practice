@@ -7,7 +7,7 @@ describe("findPromotion", () => {
     (code) => {
       expect(findPromotion(code)).toMatchObject({
         code: "SAVE10",
-        description: "10% off the order",
+        description: "10% off non-bulk items",
       });
     }
   );
