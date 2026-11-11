@@ -10,6 +10,15 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # resources and sdk-logs peer-require @opentelemetry/api <1.10.0, so npm ci fails
+      - dependency-name: "@opentelemetry/api"
+        versions: [">=1.10.0"]
+      # @vercel/otel peer-requires the exporter below 0.300.0
+      - dependency-name: "@opentelemetry/exporter-metrics-otlp-proto"
+        versions: [">=0.300.0"]
+      # 0.7.x requires Node >=22.23.4; CI runs Node 20
+      - dependency-name: "@pyroscope/nodejs"
+        versions: [">=0.7.0"]
     groups:
       npm:
         patterns:
