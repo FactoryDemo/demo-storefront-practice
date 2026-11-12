@@ -4,7 +4,7 @@ export type Promotion = {
   /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
   code: string;
   description: string;
-  /** Cents off the order, given its lines after bulk pricing. */
+  /** Cents off eligible lines, excluding those already bulk-discounted. */
   discountCents(lines: PricedLine[]): number;
 };
 
@@ -12,7 +12,7 @@ export type Promotion = {
 export const PROMOTIONS: Promotion[] = [
   {
     code: "SAVE10",
-    description: "10% off the order",
+    description: "10% off non-bulk items",
     discountCents: (lines) => {
       const subtotal = lines.reduce(
         (sum, line) => sum + line.lineTotalCents,

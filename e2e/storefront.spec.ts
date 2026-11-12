@@ -138,20 +138,20 @@ test("SAVE10 survives reload and discounts checkout and confirmation", async ({
   let cart = await openCart(page);
   await cart.getByLabel("Promo code").fill(" save10 ");
   await expect(cart.getByRole("status")).toContainText("SAVE10 applied");
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await expect(cart.locator(".cart-line").first()).toContainText("$9.45");
 
   await page.reload();
   await page.waitForLoadState("networkidle");
   cart = await openCart(page);
   await expect(cart.getByLabel("Promo code")).toHaveValue(" save10 ");
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await cart.getByRole("link", { name: "Checkout" }).click();
-  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
   await page.getByLabel("Name for the order").fill("Ada");
-  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  await page.getByRole("button", { name: "Place order · $12.10" }).click();
   await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
-  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
 
   await page.getByRole("link", { name: "Start a new order" }).click();
   await addToCart(page, "Espresso");
@@ -170,7 +170,7 @@ test("promo totals update with quantities, invalid codes, and removal", async ({
   await field.fill("SAVE10");
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
   await cart.getByRole("button", { name: "Add one Drip Coffee" }).click();
-  await expect(cart.locator(".cart-total")).toContainText("$8.50");
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
   await cart.getByRole("button", { name: "Remove one Drip Coffee" }).click();
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
   await field.fill("UNKNOWN");
@@ -199,7 +199,7 @@ test("the orders API validates SAVE10 and never trusts client totals", async ({
     data: { ...body, promoCode: " save10 " },
   });
   expect(placed.status()).toBe(201);
-  expect(await placed.json()).toMatchObject({ totalCents: 1116 });
+  expect(await placed.json()).toMatchObject({ totalCents: 1210 });
   const rejected = await request.post("/api/orders", {
     data: { ...body, promoCode: "UNKNOWN" },
   });

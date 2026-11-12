@@ -29,7 +29,7 @@ export function PromoCodeField() {
           ? `${promotion.code} applied: ${promotion.description}.`
           : isInvalid
             ? "Promo code not recognized. No discount applied."
-            : "Enter SAVE10 for 10% off the order. Clear the field to remove it."}
+            : "Enter SAVE10 for 10% off non-bulk items. Clear the field to remove it."}
       </p>
     </div>
   );

@@ -117,7 +117,7 @@ describe("validateOrderRequest", () => {
 });
 
 describe("buildOrder", () => {
-  it("recomputes the order discount after merging and bulk pricing", () => {
+  it("excludes merged bulk lines from the order discount", () => {
     const result = validateOrderRequest({
       ...VALID,
       promoCode: " save10 ",
@@ -133,7 +133,7 @@ describe("buildOrder", () => {
       throw new Error("Expected a valid order");
     }
     const order = buildOrder(result.request, "BB-PROMO1", new Date());
-    expect(order.totalCents).toBe(1116);
+    expect(order.totalCents).toBe(1210);
     expect(order.lines.map((line) => line.lineTotalCents)).toEqual([945, 295]);
   });
 
