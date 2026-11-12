@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -65,6 +66,52 @@ describe("calculateCartTotal", () => {
   it("ignores unknown promo codes", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
+  });
+
+  it("only discounts full-price lines in a mixed cart", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // 945 after bulk pricing
+      { productId: "espresso", quantity: 1 }, // 295
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateCartTotal(items, " save10 ")).toBe(1210);
+  });
+
+  it("matches FIN-212: three Espressos stay at 797 cents with SAVE10", () => {
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("never stacks any promo with bulk pricing across the catalog", () => {
+    for (const product of PRODUCTS) {
+      for (const quantity of [3, 4, 99]) {
+        for (const promotion of PROMOTIONS) {
+          expect(
+            calculateCartTotal(
+              [{ productId: product.id, quantity }],
+              promotion.code
+            )
+          ).toBe(Math.round(product.priceCents * quantity * 0.9));
+        }
+      }
+    }
+  });
+
+  it("rounds the order discount once to the nearest cent", () => {
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")
+    ).toBe(265);
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 2 }], "SAVE10")
+    ).toBe(531);
+  });
+
+  it("keeps empty and zero-quantity carts at zero with SAVE10", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 0 }], "SAVE10")
+    ).toBe(0);
   });
 });
 

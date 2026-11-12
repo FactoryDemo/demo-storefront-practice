@@ -506,6 +506,15 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.cart-promo-discount,
+.order-promo-discount {
+  display: flex;
+  justify-content: space-between;
+  color: var(--accent);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);
@@ -622,6 +631,10 @@ main {
   margin: 0;
   font-size: 13px;
   color: var(--muted);
+}
+
+.promo-code-error {
+  color: #a33;
 }
 
 .form-errors {

@@ -49,7 +49,8 @@ export function priceLines(items: CartItem[]): PricedLine[] {
  * Total for a whole cart, in cents: the sum of all line totals, less any
  * promo code discount. Bulk discounts apply per line; a mixed cart can have
  * discounted and undiscounted lines side by side. Unknown promo codes are
- * ignored, and the total never goes below zero.
+ * ignored, promo discounts never stack on bulk-priced lines, and the total
+ * never goes below zero.
  */
 export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
   const lines = priceLines(items);
