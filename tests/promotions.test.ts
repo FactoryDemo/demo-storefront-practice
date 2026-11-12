@@ -5,7 +5,9 @@ import type { PricedLine } from "../lib/types";
 describe("findPromotion", () => {
   it("matches SAVE10 without case or whitespace sensitivity", () => {
     expect(findPromotion(" save10 ")?.code).toBe("SAVE10");
-    expect(findPromotion("SAVE10")?.description).toBe("10% off your order");
+    expect(findPromotion("SAVE10")?.description).toBe(
+      "10% off full-price items"
+    );
   });
 
   it("returns null for an unknown code", () => {
@@ -16,12 +18,20 @@ describe("findPromotion", () => {
 describe("SAVE10 discount", () => {
   const save10 = PROMOTIONS[0];
 
-  it("discounts the priced order subtotal, including bulk-discounted lines", () => {
+  it("excludes bulk-discounted lines from the eligible subtotal", () => {
     const lines: PricedLine[] = [
       { productId: "drip", quantity: 3, lineTotalCents: 945 },
       { productId: "espresso", quantity: 1, lineTotalCents: 295 },
     ];
-    expect(save10.discountCents(lines)).toBe(124);
+    expect(save10.discountCents(lines)).toBe(30);
+  });
+
+  it("returns no promo discount for a bulk-only order", () => {
+    expect(
+      save10.discountCents([
+        { productId: "espresso", quantity: 3, lineTotalCents: 797 },
+      ])
+    ).toBe(0);
   });
 
   it("rounds half-cent discounts up once for the order", () => {
@@ -39,5 +49,15 @@ describe("SAVE10 discount", () => {
 
   it("returns zero cents off an empty order", () => {
     expect(save10.discountCents([])).toBe(0);
+  });
+
+  it("rounds once across eligible lines rather than per product", () => {
+    expect(
+      save10.discountCents([
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+        { productId: "cold-brew", quantity: 1, lineTotalCents: 425 },
+      ])
+    ).toBe(72);
   });
 });

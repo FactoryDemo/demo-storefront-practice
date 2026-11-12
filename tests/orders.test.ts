@@ -137,12 +137,37 @@ describe("buildOrder", () => {
       new Date("2026-01-02T03:04:05.000Z")
     );
     expect(order).toMatchObject({
-      totalCents: 1116,
+      totalCents: 1210,
       promoCode: "SAVE10",
       lines: [
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },
       ],
+    });
+  });
+
+  it("does not stack SAVE10 after merging repeated products for checkout", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      promoCode: "SAVE10",
+      items: [
+        { productId: "espresso", quantity: 1 },
+        { productId: "espresso", quantity: 2 },
+      ],
+    });
+    if (!result.ok) {
+      throw new Error("Expected a valid order");
+    }
+    expect(
+      buildOrder(
+        result.request,
+        "BB-BULK01",
+        new Date("2026-01-02T03:04:05.000Z")
+      )
+    ).toMatchObject({
+      totalCents: 797,
+      promoCode: "SAVE10",
+      lines: [{ productId: "espresso", quantity: 3, lineTotalCents: 797 }],
     });
   });
 

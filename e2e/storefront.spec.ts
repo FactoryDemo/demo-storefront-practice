@@ -140,24 +140,24 @@ test("SAVE10 discounts the cart, checkout, and confirmed order", async ({
   const promoField = cart.getByLabel("Promo code");
   await promoField.fill(" save10 ");
   await expect(cart.getByRole("status")).toContainText("SAVE10 applied");
-  await expect(cart.locator(".cart-promo-discount")).toContainText("$1.24");
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-promo-discount")).toContainText("$0.30");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
 
   await page.reload();
   await page.waitForLoadState("networkidle");
   cart = await openCart(page);
   await expect(cart.getByLabel("Promo code")).toHaveValue(" save10 ");
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await cart.getByRole("link", { name: "Checkout" }).click();
 
-  await expect(page.locator(".order-promo-discount")).toContainText("$1.24");
-  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-promo-discount")).toContainText("$0.30");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
   await page.getByLabel("Name for the order").fill("Ada");
-  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  await page.getByRole("button", { name: "Place order · $12.10" }).click();
 
   await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
-  await expect(page.locator(".order-promo-discount")).toContainText("$1.24");
-  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-promo-discount")).toContainText("$0.30");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
 
   await page.getByRole("link", { name: "Start a new order" }).click();
   await addToCart(page, "Espresso");
@@ -177,7 +177,8 @@ test("promo totals update with quantities and reject unknown codes", async ({
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
 
   await cart.getByRole("button", { name: "Add one Drip Coffee" }).click();
-  await expect(cart.locator(".cart-total")).toContainText("$8.50");
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
+  await expect(cart.locator(".cart-promo-discount")).toHaveCount(0);
   await cart.getByRole("button", { name: "Remove one Drip Coffee" }).click();
   await expect(cart.locator(".cart-total")).toContainText("$6.30");
 
@@ -206,7 +207,7 @@ test("the orders API validates SAVE10 and recomputes its discounted total", asyn
   });
   expect(placed.status()).toBe(201);
   expect(await placed.json()).toMatchObject({
-    totalCents: 1116,
+    totalCents: 1210,
     promoCode: "SAVE10",
   });
 

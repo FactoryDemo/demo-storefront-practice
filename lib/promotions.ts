@@ -1,3 +1,4 @@
+import { getProduct } from "./products";
 import type { PricedLine } from "./types";
 
 export type Promotion = {
@@ -12,9 +13,15 @@ export type Promotion = {
 export const PROMOTIONS: Promotion[] = [
   {
     code: "SAVE10",
-    description: "10% off your order",
+    description: "10% off full-price items",
     discountCents: (lines) => {
-      const subtotalCents = lines.reduce(
+      // FIN-212: never discount a line that already received bulk pricing.
+      const eligibleLines = lines.filter(
+        (line) =>
+          line.lineTotalCents ===
+          getProduct(line.productId).priceCents * line.quantity
+      );
+      const subtotalCents = eligibleLines.reduce(
         (sum, line) => sum + line.lineTotalCents,
         0
       );
