@@ -12,7 +12,6 @@ import { formatCurrency } from "../lib/currency";
 import {
   MAX_NAME_LENGTH,
   PICKUP_SLOTS,
-  type OrderRequest,
   type Order,
   type PickupSlotId,
 } from "../lib/orders";
@@ -22,13 +21,12 @@ import { useCart } from "./CartProvider";
 import { saveLastOrder } from "./lastOrder";
 import { OrderLines } from "./OrderLines";
 import { track } from "./posthog";
-import { PromoCodeField } from "./PromoCodeField";
 
 type SubmitResult =
   { ok: true; order: Order } | { ok: false; errors: string[] };
 
 export function Checkout() {
-  const { items, promoCode, isLoaded, clear } = useCart();
+  const { items, isLoaded, clear } = useCart();
   const router = useRouter();
   const startTracked = useRef(false);
 
@@ -53,7 +51,7 @@ export function Checkout() {
     );
   }
 
-  const total = calculateCartTotal(items, promoCode);
+  const total = calculateCartTotal(items);
 
   function onPlaced(order: Order) {
     track(ANALYTICS_EVENTS.orderPlaced, orderProperties(order));
@@ -66,17 +64,11 @@ export function Checkout() {
     <div className="checkout">
       <section className="checkout-panel" aria-labelledby="pickup-title">
         <h2 id="pickup-title">Pickup details</h2>
-        <CheckoutForm
-          items={items}
-          promoCode={promoCode}
-          totalCents={total}
-          onPlaced={onPlaced}
-        />
+        <CheckoutForm items={items} totalCents={total} onPlaced={onPlaced} />
       </section>
       <aside className="checkout-summary" aria-labelledby="summary-title">
         <h2 id="summary-title">Order summary</h2>
         <OrderLines lines={priceLines(items)} totalCents={total} />
-        <PromoCodeField />
         <Link href="/" className="text-link">
           ← Keep shopping
         </Link>
@@ -87,17 +79,11 @@ export function Checkout() {
 
 type CheckoutFormProps = {
   items: CartItem[];
-  promoCode: string;
   totalCents: number;
   onPlaced: (order: Order) => void;
 };
 
-function CheckoutForm({
-  items,
-  promoCode,
-  totalCents,
-  onPlaced,
-}: CheckoutFormProps) {
+function CheckoutForm({ items, totalCents, onPlaced }: CheckoutFormProps) {
   const [name, setName] = useState("");
   const [pickup, setPickup] = useState<PickupSlotId>("asap");
   const [errors, setErrors] = useState<string[]>([]);
@@ -107,7 +93,7 @@ function CheckoutForm({
     event.preventDefault();
     setIsSubmitting(true);
     setErrors([]);
-    const result = await submitOrder({ name, pickup, items, promoCode });
+    const result = await submitOrder({ name, pickup, items });
     if (result.ok) {
       onPlaced(result.order);
       return;
@@ -170,7 +156,11 @@ function CheckoutForm({
   );
 }
 
-async function submitOrder(body: OrderRequest): Promise<SubmitResult> {
+async function submitOrder(body: {
+  name: string;
+  pickup: PickupSlotId;
+  items: CartItem[];
+}): Promise<SubmitResult> {
   try {
     const response = await fetch("/api/orders", {
       method: "POST",

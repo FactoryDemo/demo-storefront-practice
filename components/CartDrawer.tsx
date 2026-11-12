@@ -12,10 +12,9 @@ import {
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
-import { PromoCodeField } from "./PromoCodeField";
 
 export function CartDrawer() {
-  const { items, promoCode, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, isOpen, closeCart, changeQuantity } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -75,12 +74,9 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
-              <PromoCodeField />
               <div className="cart-total">
                 <span>Total</span>
-                <span>
-                  {formatCurrency(calculateCartTotal(items, promoCode))}
-                </span>
+                <span>{formatCurrency(calculateCartTotal(items))}</span>
               </div>
               <Link
                 href="/checkout"
