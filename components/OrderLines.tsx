@@ -6,17 +6,10 @@ import type { PricedLine } from "../lib/types";
 type OrderLinesProps = {
   lines: PricedLine[];
   totalCents: number;
-  promoCode?: string;
 };
 
 /** Read-only list of priced lines and the order total. */
-export function OrderLines({ lines, totalCents, promoCode }: OrderLinesProps) {
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.lineTotalCents,
-    0
-  );
-  const promoDiscountCents = subtotalCents - totalCents;
-
+export function OrderLines({ lines, totalCents }: OrderLinesProps) {
   return (
     <div className="order-lines">
       <ul>
@@ -33,12 +26,6 @@ export function OrderLines({ lines, totalCents, promoCode }: OrderLinesProps) {
           </li>
         ))}
       </ul>
-      {promoCode && promoDiscountCents > 0 && (
-        <div className="order-promo-discount">
-          <span>{promoCode} · 10% off</span>
-          <span>−{formatCurrency(promoDiscountCents)}</span>
-        </div>
-      )}
       <div className="order-total">
         <span>Total</span>
         <span>{formatCurrency(totalCents)}</span>

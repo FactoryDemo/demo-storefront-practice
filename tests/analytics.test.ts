@@ -76,18 +76,6 @@ describe("cartProperties", () => {
       totalCents: 0,
     });
   });
-
-  it("uses the promo-adjusted total", () => {
-    expect(
-      cartProperties(
-        [
-          { productId: "drip", quantity: 3 },
-          { productId: "espresso", quantity: 1 },
-        ],
-        "SAVE10"
-      )
-    ).toEqual({ lineCount: 2, itemCount: 4, totalCents: 1210 });
-  });
 });
 
 describe("orderProperties", () => {

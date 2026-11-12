@@ -37,11 +37,7 @@ export function OrderConfirmation({ orderId }: { orderId: string }) {
         Pickup: <strong>{pickupLabel(order.pickup)}</strong>. We&apos;ll call
         your name at the counter.
       </p>
-      <OrderLines
-        lines={order.lines}
-        totalCents={order.totalCents}
-        promoCode={order.promoCode}
-      />
+      <OrderLines lines={order.lines} totalCents={order.totalCents} />
       <Link href="/" className="button button-secondary">
         Start a new order
       </Link>
