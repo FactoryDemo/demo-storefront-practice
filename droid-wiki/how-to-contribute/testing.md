@@ -14,11 +14,12 @@ Vitest uses the Node environment and includes `tests/**/*.test.ts`. Tests mirror
 
 | Test file | What it exercises |
 | --- | --- |
-| `tests/pricing.test.ts` | Below/at/above discount threshold, nonpositive quantities, mixed carts, unknown products/codes, currency display |
+| `tests/pricing.test.ts` | Bulk thresholds, nonpositive quantities, mixed carts, unknown products/codes, SAVE10 normalization and rounding, catalog-wide non-stacking at quantities 3/4/99, currency display |
+| `tests/promotions.test.ts` | Seven tests: normalized lookup, unknown codes, eligible-line filtering, bulk-only orders, half-cent rounding, empty orders, rounding once across eligible products |
 | `tests/cart.test.ts` | Adding, incrementing, removing, counts, malformed saved data |
-| `tests/orders.test.ts` | Names, pickup slots, item validation, duplicate merging, server-priced order shape and total |
+| `tests/orders.test.ts` | Names, pickup slots, item validation, duplicate merging, promo normalization/blank omission/invalid types, forged-total repricing, mixed-cart discounts, non-stacking after merging |
 | `tests/products.test.ts` | Catalog structure and lookup behavior |
-| `tests/analytics.test.ts` | Event/flag names, release tags, and privacy-safe properties |
+| `tests/analytics.test.ts` | Event/flag names, release tags, privacy-safe properties, promo-adjusted cart total with unchanged property keys |
 | `tests/logger.test.ts` | Structured output, levels, key-based redaction, serialization |
 | `tests/telemetry.test.ts` | Response passthrough, logged generic 500, unconfigured exporters |
 
@@ -45,11 +46,17 @@ npm run test:e2e
 
 `playwright.config.ts` uses Chromium and starts a production build on port 3000, waiting on `/api/health`. It reuses an existing server outside CI, which can accidentally test stale code. CI forbids focused tests and retains failure traces.
 
-`e2e/storefront.spec.ts` has six scenarios: catalog rendering, discounted lines, cart reload persistence, checkout confirmation/cart clearing, order API validation/repricing, and health. The helper waits for hydration before clicking.
+`e2e/storefront.spec.ts` has **nine scenarios**. The original six cover catalog rendering, discounted lines, cart reload persistence, checkout confirmation/cart clearing, order API validation/repricing, and health. Three promo scenarios cover:
+
+- SAVE10 across cart, checkout, and confirmation; raw code persistence after reload; clearing the code after checkout.
+- Quantity changes across the bulk threshold, removal of the extra discount row for bulk-only carts, unknown-code feedback, and clearing input.
+- API normalization of `" save10 "`, authoritative repricing despite a supplied `totalCents: 1`, and rejection of an unknown code.
+
+The helper waits for hydration before clicking.
 
 The checkout scenario pins three Drip Coffees to $9.45, plus one Espresso to $12.40. It verifies the same confirmation total and empty cart. See [cart pricing](../features/cart-pricing.md) and [API](../api.md).
 
-There is no dedicated promotion test module or promo browser scenario in the current tree. The only promo-specific unit assertion checks that an unknown code leaves pricing unchanged; the registry is empty (`tests/pricing.test.ts`, `lib/promotions.ts`). The API scenario checks the known 945-cent bulk total and rejection of an invalid order, but does not submit a forged total (`e2e/storefront.spec.ts`).
+The promo checkout pins the same mixed cart to **$12.10**, with a **$0.30** discount only on the full-price Espresso. Public unit tests also pin the visible FIN-212 regression: three Espressos stay **797 cents** with SAVE10, including after merging repeated product entries (`tests/pricing.test.ts`, `tests/orders.test.ts`). These visible assertions do not reveal the private Finance archive or establish its full scope.
 
 ## Manual QA and gaps
 
