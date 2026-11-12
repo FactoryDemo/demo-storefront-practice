@@ -10,7 +10,9 @@ Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the projec
 
 Add pricing rules in `lib/pricing.ts`, then use them from the UI and `lib/orders.ts`. Do not duplicate arithmetic in a component or trust totals in an HTTP request. Currency values remain integer cents; `lib/currency.ts` handles display. The current bulk calculation uses a fractional rate and rounds the resulting line to a whole cent.
 
-`lib/promotions.ts` retains an empty promotion registry. The optional hook in `lib/pricing.ts` ignores unknown codes and would pass all bulk-priced lines to a registered promotion, then clamp the total at zero. There is no built-in non-stacking rule or current promo UI/API contract. Adding a live code requires explicit UI, validation, and test work rather than assuming checkout already forwards it (`components/Checkout.tsx`, `lib/orders.ts`).
+`lib/promotions.ts` registers SAVE10. The hook in `lib/pricing.ts` ignores unknown codes, passes all post-bulk lines to the promotion, and clamps the total at zero. SAVE10 enforces FIN-212 inside its own discount function by including only lines whose total equals catalog price times quantity. Its 10% discount rounds once on the eligible subtotal with integer quotient/remainder arithmetic, not separately per product.
+
+`components/PromoCodeField.tsx` shares the input across cart and checkout. `components/CartProvider.tsx` persists the raw code and clears it with items after ordering; `lib/orders.ts` rejects unknown or non-string codes, normalizes accepted codes, and re-prices on the server. New promotions must preserve the non-stacking rule and server/client agreement. Extend `tests/promotions.test.ts`, `tests/pricing.test.ts`, `tests/orders.test.ts`, and `e2e/storefront.spec.ts`; the registry interface alone does not enforce eligibility for future codes.
 
 ## Types and names
 

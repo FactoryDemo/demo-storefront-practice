@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-12T18:54:51.706Z",
-  "commitHash": "11789b48e07aaee25433cc2f67bb15e101c401a5",
+  "generatedAt": "2026-11-12T20:34:41.562Z",
+  "commitHash": "e0462e94b0cfa8c89bd419994343526e3800fc53",
   "branch": "main",
   "pageCount": 31,
   "topLevelSections": [
@@ -52,13 +52,13 @@
   ],
   "warnings": [
     "Phase 3.5 skipped: .factory/skills/qa/config.yaml is missing. Run /install-qa to enable screenshots.",
-    "Existing dependency audit found 20 vulnerable package entries: 11 moderate, 5 high, 4 critical. See cleanup-opportunities.md."
+    "Existing dependency installation audit found 20 vulnerable package entries: 11 moderate, 5 high, 4 critical. See cleanup-opportunities.md."
   ],
   "videoOverview": {
     "status": "failed",
     "warnings": [
-      "HyperFrames 0.4.44 doctor failed required checks: FFmpeg not found; FFprobe not found. The CLI exited 0 despite these failures. Rendering skipped in non-interactive mode.",
-      "No prior playable video was available: all four remote wiki runs were inspected and none returned videoOverview or a playbackUrl."
+      "HyperFrames 0.4.44 doctor reported failed prerequisite checks: FFmpeg and FFprobe not found; Docker not running. The CLI exited 0 despite these checks. Rendering skipped in non-interactive mode.",
+      "No prior playable video was available: all five remote wiki runs were inspected and none returned videoOverview or a playbackUrl."
     ]
   }
 }

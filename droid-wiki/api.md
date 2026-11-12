@@ -13,12 +13,13 @@ There is no order lookup endpoint. `/orders/[id]` is a browser confirmation page
 
 ## Place an order
 
-The browser sends the pickup name, slot, and quantities (`components/Checkout.tsx`, `lib/orders.ts`):
+The browser sends the pickup name, slot, quantities, and optional promo code (`components/Checkout.tsx`, `lib/orders.ts`):
 
 ```json
 {
   "name": "Demo",
   "pickup": "in-15",
+  "promoCode": " save10 ",
   "items": [
     { "productId": "drip", "quantity": 3 },
     { "productId": "espresso", "quantity": 1 }
@@ -32,12 +33,13 @@ The browser sends the pickup name, slot, and quantities (`components/Checkout.ts
 - A known pickup ID: `asap`, `in-15`, `in-30`, `in-45`, or `in-60`.
 - A nonempty items array.
 - A catalog product ID and an integer quantity from 1 through 99 on each submitted item.
+- An optional promo code. Omitted/undefined values and blank strings are accepted and omitted from the validated request. Recognized strings are trimmed and uppercased; null, other nonstring values, and unknown nonblank codes are rejected with `"Enter a valid promo code or remove it."`.
 
 Validation collects errors from the fields and items. Duplicate product IDs merge after per-item validation, so the merged quantity can exceed 99. Browser cart restoration does not enforce that cap either (`lib/cart.ts`). These are current semantics, not a claim of a production-safe maximum.
 
-Extra fields such as a supplied total or `promoCode` are ignored when building the validated request. There is no promo-code request contract or promo validation. `buildOrder` re-prices against `lib/products.ts` through `lib/pricing.ts` without passing a promotion argument.
+Unrecognized extra fields, such as a supplied price, total, or discount amount, are ignored when building the validated request. `promoCode` is a validated input, not a trusted discount. `buildOrder` in `lib/orders.ts` re-prices against `lib/products.ts` through `lib/pricing.ts` and resolves the canonical code through `findPromotion` in `lib/promotions.ts`.
 
-For the example, the bulk Drip Coffee line costs 945 cents and the Espresso costs 295 cents, giving a 1,240-cent total. The order total equals the sum of its priced lines (`lib/orders.ts`, `lib/pricing.ts`, `tests/orders.test.ts`).
+For the example, the bulk Drip Coffee line costs 945 cents and the full-price Espresso costs 295 cents, giving a 1,240-cent subtotal. SAVE10 excludes the bulk line and deducts 30 cents from the eligible Espresso subtotal, giving a **1,210-cent total**. Three Espressos alone remain 797 cents with SAVE10. See [cart pricing](features/cart-pricing.md) for eligibility and rounding (`lib/promotions.ts`, `tests/orders.test.ts`, `tests/pricing.test.ts`).
 
 An illustrative 201 response:
 
@@ -50,10 +52,13 @@ An illustrative 201 response:
     { "productId": "drip", "quantity": 3, "lineTotalCents": 945 },
     { "productId": "espresso", "quantity": 1, "lineTotalCents": 295 }
   ],
-  "totalCents": 1240,
+  "totalCents": 1210,
+  "promoCode": "SAVE10",
   "placedAt": "2026-11-12T12:00:00.000Z"
 }
 ```
+
+The optional response `promoCode` is canonical; an order without a code omits it. A valid code can remain on an order even when no lines qualify. Lines retain their post-bulk amounts, so with a promo discount their sum can exceed `totalCents`. There is no explicit discount-breakdown response field; `components/OrderLines.tsx` derives the displayed discount from that difference.
 
 The actual route creates `BB-` plus six uppercase UUID characters and the current timestamp (`app/api/orders/route.ts`). It does not store the result or guarantee global ID uniqueness.
 
@@ -76,7 +81,8 @@ Requests are unauthenticated mock actions. There is no idempotency key or durabl
 | `app/api/orders/route.ts` | Parse, validate, generate ID, price, record, and respond |
 | `app/api/health/route.ts` | Health response, uptime log, and health counter |
 | `lib/orders.ts` | Request/result types, validation, merging, pricing |
+| `lib/promotions.ts` | Recognized codes, normalization, SAVE10 eligibility |
 | `server/telemetry.ts` | Wrapper, generic failure response, metrics, flush |
-| `e2e/storefront.spec.ts` | Existing production-build API smoke checks |
+| `e2e/storefront.spec.ts` | Production-build API checks, including forged-total rejection through repricing and invalid codes |
 
 See [pickup checkout](features/checkout.md) for browser handling and [data models](reference/data-models.md) for types.
