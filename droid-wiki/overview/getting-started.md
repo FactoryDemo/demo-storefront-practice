@@ -31,7 +31,7 @@ Expect HTTP 200 and `{"status":"ok"}` from `app/api/health/route.ts`.
 
 These values come from `lib/products.ts` and `lib/pricing.ts`; the server response is covered in `tests/orders.test.ts`, and the browser scenario is in `e2e/storefront.spec.ts`. Nothing is charged.
 
-For a second checkout, enter `save10` in the cart or checkout promo field. Three Drip Coffees plus one Espresso now cost $12.10: the coffee line keeps its bulk price, and only the full-price Espresso receives the promo discount. Reloading restores both quantities and the code; clearing the field removes the promo, and placing an order clears both cart and code (`components/PromoCodeField.tsx`, `components/CartProvider.tsx`, `lib/promotions.ts`, `e2e/storefront.spec.ts`). Unknown codes show an error and must be corrected or cleared before the server accepts the order (`lib/orders.ts`).
+Reloading restores cart quantities, and placing an order clears the cart (`components/CartProvider.tsx`, `components/Checkout.tsx`, `e2e/storefront.spec.ts`). There is no promo field in the current cart or checkout, and `lib/promotions.ts` has no active codes. Follow the $12.40 flow above rather than the historical SAVE10 examples in [lore](../lore.md).
 
 ## Required checks
 

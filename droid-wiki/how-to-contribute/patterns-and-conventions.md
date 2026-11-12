@@ -10,9 +10,9 @@ Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the projec
 
 Add pricing rules in `lib/pricing.ts`, then use them from the UI and `lib/orders.ts`. Do not duplicate arithmetic in a component or trust totals in an HTTP request. Currency values remain integer cents; `lib/currency.ts` handles display. The current bulk calculation uses a fractional rate and rounds the resulting line to a whole cent.
 
-`lib/promotions.ts` registers SAVE10. The hook in `lib/pricing.ts` ignores unknown codes, passes all post-bulk lines to the promotion, and clamps the total at zero. SAVE10 enforces FIN-212 inside its own discount function by including only lines whose total equals catalog price times quantity. Its 10% discount rounds once on the eligible subtotal with integer quotient/remainder arithmetic, not separately per product.
+`lib/promotions.ts` defines an empty registry. The dormant hook in `lib/pricing.ts` ignores unknown codes; a future matching callback would receive all post-bulk lines, with its discount subtracted and the total clamped at zero. The interface does not enforce eligibility, rounding, or non-stacking rules. No promotion callback is currently registered.
 
-`components/PromoCodeField.tsx` shares the input across cart and checkout. `components/CartProvider.tsx` persists the raw code and clears it with items after ordering; `lib/orders.ts` rejects unknown or non-string codes, normalizes accepted codes, and re-prices on the server. New promotions must preserve the non-stacking rule and server/client agreement. Extend `tests/promotions.test.ts`, `tests/pricing.test.ts`, `tests/orders.test.ts`, and `e2e/storefront.spec.ts`; the registry interface alone does not enforce eligibility for future codes.
+The cart, checkout, and order types have no promo field (`components/CartProvider.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). Adding a promotion would require explicit product rules, server/client integration, and corresponding coverage in `tests/pricing.test.ts`, `tests/orders.test.ts`, and `e2e/storefront.spec.ts`; populating the registry alone would not expose it to checkout.
 
 ## Types and names
 

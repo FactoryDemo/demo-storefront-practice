@@ -1,6 +1,6 @@
 # By the numbers
 
-Data collected on **2026-11-12**, commit [`e0462e9`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53). These are repository measurements, not production usage or individual contributor statistics. See [architecture](overview/architecture.md) for what the code does and [lore](lore.md) for how it grew.
+Data collected on **2026-11-12**, commit [`05be85e`](https://github.com/FactoryDemo/demo-storefront-practice/commit/05be85e2a6da3930a48c3b3a6ebc53d2e2567b40). These are repository measurements, not production usage or individual contributor statistics. See [architecture](overview/architecture.md) for what the code does and [lore](lore.md) for how it grew.
 
 ## Scope and counting rules
 
@@ -8,18 +8,18 @@ The snapshot uses `git ls-tree -r --name-only HEAD` and each file's committed co
 
 | Category | Definition | Files | Physical lines |
 | --- | --- | ---: | ---: |
-| Source | All tracked files under `app/`, `components/`, `lib/`, `server/`, `scripts/`, plus `instrumentation.ts`; includes CSS and operational JavaScript | 42 | 3,499 |
-| Tests | `tests/` and `e2e/`: eight Vitest modules and one Playwright module | 9 | 1,060 |
+| Source | All tracked files under `app/`, `components/`, `lib/`, `server/`, `scripts/`, plus `instrumentation.ts`; includes CSS and operational JavaScript | 41 | 3,342 |
+| Tests | `tests/` and `e2e/`: seven Vitest modules and one Playwright module | 8 | 776 |
 | Configuration and automation | Remaining non-Markdown text outside `droid-wiki/`: root configs/manifests, `.github/` YAML and ownership rules, `.devcontainer/`, `.husky/`, `.env.example`, and `observability/grafana/` JSON | 35 | 1,704 |
-| **Source + tests + configuration** | Disjoint categories above | **86** | **6,263** |
-| Documentation | Tracked Markdown outside `droid-wiki/`, including `AGENTS.md`, `README.md`, `docs/`, GitHub templates, and `.factory/skills/storefront-qa/SKILL.md` | 9 | 594 |
-| Generated wiki | Tracked `droid-wiki/`: 31 Markdown pages (1,739 lines) and `droid-wiki/.wiki-meta.json` (64 lines) | 32 | 1,803 |
+| **Source + tests + configuration** | Disjoint categories above | **84** | **5,822** |
+| Documentation | Tracked Markdown outside `droid-wiki/`, including `AGENTS.md`, `README.md`, `docs/`, GitHub templates, and `.factory/skills/storefront-qa/SKILL.md` | 9 | 586 |
+| Generated wiki | Tracked `droid-wiki/`: 31 Markdown pages (1,781 lines) and `droid-wiki/.wiki-meta.json` (64 lines) | 32 | 1,845 |
 | Assets | JPEG files under `public/products/`; no binary line count | 13 | Not counted |
 | Excluded generated/lock files | `package-lock.json` and `next-env.d.ts` | 2 | Excluded |
 
-There are **142 tracked files** in total: 86 source/test/configuration + 9 non-wiki documentation + 32 wiki + 13 assets + 2 excluded files. There is **one package**, defined by the single tracked `package.json`; this is not a monorepo. No `node_modules/`, generated `droid-wiki/`, build artifacts, lockfile lines, or JPEG bytes enter source metrics. Test/source ratios are **9:42 files** and **30.3% physical lines**; neither measures coverage.
+There are **140 tracked files** in total: 84 source/test/configuration + 9 non-wiki documentation + 32 wiki + 13 assets + 2 excluded files. There is **one package**, defined by the single tracked `package.json`; this is not a monorepo. No `node_modules/`, generated `droid-wiki/`, build artifacts, lockfile lines, or JPEG bytes enter source metrics. Test/source ratios are **8:41 files** and **23.2% physical lines**; neither measures coverage.
 
-Since the prior snapshot at [`11789b4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/11789b48e07aaee25433cc2f67bb15e101c401a5), the committed delta is **35 files, 618 additions and 99 deletions**: a wiki refresh plus the active SAVE10 promotion change. The latter adds `components/PromoCodeField.tsx` and `tests/promotions.test.ts`. All counts below, including source language totals, directory means, import graphs, and exports, were freshly recomputed from committed blobs. No installed files or concurrent documentation edits enter these counts.
+Since the prior snapshot at [`e0462e9`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53), the committed delta is **33 files, 227 additions and 634 deletions**: an intervening wiki refresh and the second SAVE10 reversion. The reversion deletes the historical [`components/PromoCodeField.tsx`](https://github.com/FactoryDemo/demo-storefront-practice/blob/e0462e94b0cfa8c89bd419994343526e3800fc53/components/PromoCodeField.tsx) and [`tests/promotions.test.ts`](https://github.com/FactoryDemo/demo-storefront-practice/blob/e0462e94b0cfa8c89bd419994343526e3800fc53/tests/promotions.test.ts); `lib/promotions.ts` again has an empty registry, while the preexisting optional cart-total hook remains. All counts below, including source language totals, directory means, import graphs, and exports, were freshly recomputed from committed blobs. No installed files or concurrent documentation edits enter these counts.
 
 ## Source languages
 
@@ -28,17 +28,17 @@ xychart-beta horizontal
   title "Committed source physical lines: 2026-11-12"
   x-axis ["TypeScript + TSX", "CSS", "JavaScript"]
   y-axis "Physical lines" 0 --> 2200
-  bar [2044, 769, 686]
+  bar [1900, 756, 686]
 ```
 
 | Language | Files | Physical lines | Share of source lines |
 | --- | ---: | ---: | ---: |
-| TypeScript, including TSX | 34 | 2,044 | 58.4% |
-| CSS | 1 | 769 | 22.0% |
-| JavaScript (`.mjs`) | 7 | 686 | 19.6% |
-| **Total** | **42** | **3,499** | **100%** |
+| TypeScript, including TSX | 33 | 1,900 | 56.9% |
+| CSS | 1 | 756 | 22.6% |
+| JavaScript (`.mjs`) | 7 | 686 | 20.5% |
+| **Total** | **41** | **3,342** | **100%** |
 
-TypeScript splits into 17 `.ts` files / 1,128 lines and 17 `.tsx` files / 916 lines. Tests and executable root configuration files are deliberately outside this source-only chart.
+TypeScript splits into 17 `.ts` files / 1,083 lines and 16 `.tsx` files / 817 lines. Tests and executable root configuration files are deliberately outside this source-only chart.
 
 ### Average size by source directory
 
@@ -46,98 +46,96 @@ Arithmetic mean = physical lines divided by files, including CSS where present. 
 
 | Source location | Files | Physical lines | Mean lines/file |
 | --- | ---: | ---: | ---: |
-| `app/` | 9 | 967 | 107.4 |
-| `components/` | 13 | 895 | 68.8 |
-| `lib/` | 8 | 593 | 74.1 |
+| `app/` | 9 | 954 | 106.0 |
+| `components/` | 12 | 796 | 66.3 |
+| `lib/` | 8 | 548 | 68.5 |
 | `scripts/` | 7 | 686 | 98.0 |
 | `server/` | 4 | 341 | 85.3 |
 | Root: `instrumentation.ts` | 1 | 17 | 17.0 |
-| **All source** | **42** | **3,499** | **83.3** |
+| **All source** | **41** | **3,342** | **81.5** |
 
-`app/globals.css` alone contributes 769 lines, so `app/`'s mean should not be read as the typical route-module size.
+`app/globals.css` alone contributes 756 lines, so `app/`'s mean should not be read as the typical route-module size.
 
 ## Activity and attribution
 
-The complete history reachable from `HEAD` contains **38 commits**, from **2026-11-01 through 2026-11-12**: **33 non-merge commits and five merges**. Counts below include merges and use recorded committer calendar dates (`git log --format=%cs`), with Monday-based weeks. The newest week and November are incomplete.
+The complete history reachable from `HEAD` contains **40 commits**, from **2026-11-01 through 2026-11-12**: **35 non-merge commits and five merges**. Counts below include merges and use recorded committer calendar dates (`git log --format=%cs`), with Monday-based weeks. The newest week and November are incomplete.
 
 | Recent week | Commits |
 | --- | ---: |
 | 2026-10-19–2026-10-25 | 0 |
 | 2026-10-26–2026-11-01 | 1 |
 | 2026-11-02–2026-11-08 | 20 |
-| 2026-11-09–2026-11-12, through snapshot | 17 |
+| 2026-11-09–2026-11-12, through snapshot | 19 |
 
 | Recent month | Commits |
 | --- | ---: |
 | 2026-08 | 0 |
 | 2026-09 | 0 |
 | 2026-10 | 0 |
-| 2026-11, through November 12 | 38 |
+| 2026-11, through November 12 | 40 |
 
 Zero earlier counts mean the repository did not yet have commits, not an observed slowdown in an established project.
 
-**21 of 38 commits (approximately 55.3%) are explicitly bot-attributed.** A commit qualifies when its author name/email contains `[bot]` or a `Co-authored-by:` trailer contains `[bot]`; each commit is counted once. Here that is two bot-authored dependency commits and 19 bot-coauthored commits, with no overlap. The [initial wiki-only commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/3c5575cfdba7a787f77a313b622e4cff70d9596f) has neither marker; the [SAVE10 rehearsal commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/b83863dbfa7836f5215e9672534cc57a9b828baa) has bot coauthor markers and counts once despite repeated trailers. The [reversion](https://github.com/FactoryDemo/demo-storefront-practice/commit/3461fc30f6b24b1cc8a7497bdfcd9e34c9bc90df) and [wiki automation update](https://github.com/FactoryDemo/demo-storefront-practice/commit/11789b48e07aaee25433cc2f67bb15e101c401a5) also have bot coauthor trailers. The active [SAVE10 reintroduction](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53) is bot-coauthored; the [latest committed wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/c153cf561070227aa3207b16bf534fd4cdade1bd) has neither marker. Subjects alone are not evidence of attribution. Merge messages are not inferred to inherit attribution from their parents. This is a **lower bound on AI-assisted work**, not a measurement of AI-written lines: bot attribution also includes dependency automation, and uncredited assistance cannot be detected from Git. No individual rankings are inferred.
+**22 of 40 commits (55.0%) are explicitly bot-attributed.** A commit qualifies when its author name/email contains `[bot]` or a `Co-authored-by:` trailer contains `[bot]`; each commit is counted once. Here that is two bot-authored dependency commits and 20 bot-coauthored commits, with no overlap. The [initial wiki-only commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/3c5575cfdba7a787f77a313b622e4cff70d9596f) has neither marker; the [SAVE10 rehearsal commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/b83863dbfa7836f5215e9672534cc57a9b828baa) has bot coauthor markers and counts once despite repeated trailers. The [reversion](https://github.com/FactoryDemo/demo-storefront-practice/commit/3461fc30f6b24b1cc8a7497bdfcd9e34c9bc90df) and [wiki automation update](https://github.com/FactoryDemo/demo-storefront-practice/commit/11789b48e07aaee25433cc2f67bb15e101c401a5) also have bot coauthor trailers. The later-reverted [SAVE10 reintroduction](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53) is bot-coauthored; the [latest committed wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/df7bd0fbd8dfc3a24a3a4b38d381f88600955014) has neither marker. The [second reversion](https://github.com/FactoryDemo/demo-storefront-practice/commit/05be85e2a6da3930a48c3b3a6ebc53d2e2567b40) is bot-coauthored. Subjects alone are not evidence of attribution. Merge messages are not inferred to inherit attribution from their parents. This is a **lower bound on AI-assisted work**, not a measurement of AI-written lines: bot attribution also includes dependency automation, and uncredited assistance cannot be detected from Git. No individual rankings are inferred.
 
 ### Highest-churn paths in the last 90 days
 
-Window: **2026-08-15 00:00 UTC inclusive to 2026-11-13 00:00 UTC exclusive**. Sum additions and deletions from `git diff-tree --root --numstat -r` for every reachable non-merge commit in that window. Initial additions count; merge diffs do not count twice. Exclude binaries, lockfiles, generated declarations/wiki, and installed dependencies. Non-wiki documentation and configuration remain eligible. All 33 non-merge commits fall inside this window.
+Window: **2026-08-15 00:00 UTC inclusive to 2026-11-13 00:00 UTC exclusive**. Sum additions and deletions from `git diff-tree --root --numstat -r` for every reachable non-merge commit in that window. Initial additions count; merge diffs do not count twice. Exclude binaries, lockfiles, generated declarations/wiki, and installed dependencies. Non-wiki documentation and configuration remain eligible. All 35 non-merge commits fall inside this window.
 
 | Path | Added | Deleted | Churn (added + deleted) | Touching non-merge commits |
 | --- | ---: | ---: | ---: | ---: |
-| `app/globals.css` | 834 | 65 | 899 | 4 |
+| `app/globals.css` | 834 | 78 | 912 | 5 |
+| `e2e/storefront.spec.ts` | 346 | 216 | 562 | 6 |
 | `observability/grafana/dashboard.json` | 522 | 0 | 522 | 1 |
-| `e2e/storefront.spec.ts` | 346 | 125 | 471 | 5 |
-| `components/Checkout.tsx` | 245 | 44 | 289 | 5 |
-| `tests/orders.test.ts` | 242 | 37 | 279 | 4 |
-| `tests/pricing.test.ts` | 193 | 65 | 258 | 6 |
+| `tests/orders.test.ts` | 242 | 108 | 350 | 5 |
+| `components/Checkout.tsx` | 258 | 73 | 331 | 6 |
+| `tests/pricing.test.ts` | 194 | 113 | 307 | 7 |
+| `docs/architecture.md` | 192 | 59 | 251 | 7 |
 | `components/Storefront.tsx` | 159 | 89 | 248 | 3 |
-| `docs/architecture.md` | 190 | 49 | 239 | 6 |
+| `lib/orders.ts` | 187 | 43 | 230 | 5 |
 | `.github/workflows/droid.yml` | 133 | 93 | 226 | 7 |
-| `lib/orders.ts` | 185 | 21 | 206 | 4 |
 
 The highest-churn directories use the same window and exclusions. A commit touching several files in one directory counts once in that directory's last column.
 
 | Directory | Added | Deleted | Churn | Touching non-merge commits |
 | --- | ---: | ---: | ---: | ---: |
-| `components/` | 1,099 | 204 | 1,303 | 6 |
+| `components/` | 1,120 | 324 | 1,444 | 7 |
+| `tests/` | 969 | 323 | 1,292 | 9 |
+| `app/` | 1,040 | 86 | 1,126 | 6 |
 | `.github/` | 947 | 179 | 1,126 | 20 |
-| `app/` | 1,040 | 73 | 1,113 | 5 |
-| `tests/` | 968 | 129 | 1,097 | 8 |
-| `lib/` | 663 | 70 | 733 | 9 |
+| `lib/` | 670 | 122 | 792 | 10 |
 
 This young repository's churn is mostly construction, not a defect-rate or maintenance-cost proxy. The large dashboard is configuration, not application source.
 
 ## Static relative import depth
 
-The TypeScript parser inspected the committed contents of all **41 source TS/TSX/MJS modules** at this snapshot. Only top-level static ES `import` and `export … from` declarations with relative specifiers are edges; resolve to tracked source files using the literal path, supported module extensions, or an index module. CSS is a terminal source node. There are **87 resolved static relative edges**, including **14 type-only edges**, and no unresolved relative imports or cycles in this measured graph.
+The TypeScript parser inspected the committed contents of all **40 source TS/TSX/MJS modules** at this snapshot. Only top-level static ES `import` and `export … from` declarations with relative specifiers are edges; resolve to tracked source files using the literal path, supported module extensions, or an index module. CSS is a terminal source node. There are **79 resolved static relative edges**, including **14 type-only edges**, and no unresolved relative imports or cycles in this measured graph.
 
-The deepest path has **ten edges / eleven files**, including type-only dependencies:
+The deepest path has **nine edges / ten files**, including type-only dependencies:
 
 ```text
-app/checkout/page.tsx
-→ components/Checkout.tsx
-→ components/PromoCodeField.tsx
+app/page.tsx
+→ components/Storefront.tsx
+→ components/ProductCard.tsx
 → components/CartProvider.tsx
 → components/posthog.ts
 → lib/analytics.ts
 → lib/orders.ts
 → lib/pricing.ts
-→ lib/promotions.ts
 → lib/products.ts
 → lib/types.ts
 ```
 
-Excluding fully type-only import declarations leaves **73 edges** and a maximum of **eight edges / nine files**:
+Excluding fully type-only import declarations leaves **65 edges** and a maximum of **seven edges / eight files**:
 
 ```text
-app/checkout/page.tsx
-→ components/Checkout.tsx
-→ components/PromoCodeField.tsx
+app/page.tsx
+→ components/Storefront.tsx
+→ components/ProductCard.tsx
 → components/CartProvider.tsx
 → components/posthog.ts
 → lib/analytics.ts
-→ lib/pricing.ts
-→ lib/promotions.ts
+→ lib/cart.ts
 → lib/products.ts
 ```
 
@@ -147,7 +145,7 @@ Depth is the longest simple path, not the number of imports in one module. Neith
 
 These measurements were freshly parsed from committed source modules. They count explicit top-level exported bindings, including types, constants, functions, and Next.js default exports. `default` counts once under that name; local non-exported helpers do not count. There are no source re-export declarations to expand. These are module-boundary symbols, not necessarily supported public APIs.
 
-Across the single package’s 41 source modules: **99 exports = 77 value bindings + 22 type-only declarations**; **35 modules export something**, and six command-line entrypoints export nothing.
+Across the single package’s 40 source modules: **98 exports = 76 value bindings + 22 type-only declarations**; **34 modules export something**, and six command-line entrypoints export nothing.
 
 | Module | Exports | Exported names |
 | --- | ---: | --- |
@@ -167,7 +165,6 @@ Across the single package’s 41 source modules: **99 exports = 77 value binding
 | `components/OrderConfirmation.tsx` | 1 | `OrderConfirmation` |
 | `components/OrderLines.tsx` | 1 | `OrderLines` |
 | `components/ProductCard.tsx` | 1 | `ProductCard` |
-| `components/PromoCodeField.tsx` | 1 | `PromoCodeField` |
 | `components/SiteHeader.tsx` | 1 | `SiteHeader` |
 | `components/Storefront.tsx` | 1 | `default` |
 | `components/lastOrder.ts` | 2 | `saveLastOrder`, `loadLastOrder` |
