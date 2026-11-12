@@ -13,7 +13,7 @@ There is no order lookup endpoint. `/orders/[id]` is a browser confirmation page
 
 ## Place an order
 
-The browser sends only the pickup name, slot, and quantities (`components/Checkout.tsx`):
+The browser sends the pickup name, slot, and quantities (`components/Checkout.tsx`, `lib/orders.ts`):
 
 ```json
 {
@@ -35,7 +35,9 @@ The browser sends only the pickup name, slot, and quantities (`components/Checko
 
 Validation collects errors from the fields and items. Duplicate product IDs merge after per-item validation, so the merged quantity can exceed 99. Browser cart restoration does not enforce that cap either (`lib/cart.ts`). These are current semantics, not a claim of a production-safe maximum.
 
-Extra fields such as a supplied total or promo code are not used to build the validated request. `buildOrder` re-prices against `lib/products.ts` through `lib/pricing.ts`. The current checkout does not support promotion codes.
+Extra fields such as a supplied total or `promoCode` are ignored when building the validated request. There is no promo-code request contract or promo validation. `buildOrder` re-prices against `lib/products.ts` through `lib/pricing.ts` without passing a promotion argument.
+
+For the example, the bulk Drip Coffee line costs 945 cents and the Espresso costs 295 cents, giving a 1,240-cent total. The order total equals the sum of its priced lines (`lib/orders.ts`, `lib/pricing.ts`, `tests/orders.test.ts`).
 
 An illustrative 201 response:
 
