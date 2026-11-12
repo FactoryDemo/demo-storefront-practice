@@ -31,6 +31,8 @@ Expect HTTP 200 and `{"status":"ok"}` from `app/api/health/route.ts`.
 
 These values come from `lib/products.ts` and `lib/pricing.ts`; the server response is covered in `tests/orders.test.ts`, and the browser scenario is in `e2e/storefront.spec.ts`. Nothing is charged.
 
+There is no promo-code field. Reloading restores cart quantities, not a promotion; the mixed-cart total remains $12.40 (`components/CartProvider.tsx`, `components/CartDrawer.tsx`, `components/Checkout.tsx`).
+
 ## Required checks
 
 ```bash

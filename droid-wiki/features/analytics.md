@@ -12,10 +12,12 @@ Optional PostHog integration observes the shopping journey, reports browser exce
 | Event | Call site | Custom properties |
 | --- | --- | --- |
 | `product_added` | `components/ProductCard.tsx` | `productId`, category, unit `priceCents`, resulting `quantityInCart`. |
-| `cart_opened` | `components/CartProvider.tsx` | `lineCount`, summed `itemCount`, priced `totalCents`. |
+| `cart_opened` | `components/CartProvider.tsx` | `lineCount`, summed `itemCount`, bulk-priced `totalCents`. |
 | `checkout_started` | `components/Checkout.tsx` | Same cart summary; tracked once per component mount after hydration with a nonempty cart. |
-| `order_placed` | `components/Checkout.tsx` | `orderId`, pickup, line/item counts, server `totalCents`. |
+| `order_placed` | `components/Checkout.tsx` | `orderId`, pickup, line/item counts, authoritative server `totalCents`. |
 | `order_failed` | `components/Checkout.tsx` | `errorCount`, not raw submitted input or customer name. |
+
+`cartProperties(items)` in `lib/analytics.ts` calls `calculateCartTotal(items)` with the same bulk pricing used by the UI and checkout. Three Drip Coffees plus one Espresso report 1240 cents in cart events and, for an unchanged ordinary cart, in `order_placed` through `orderProperties`. There is no active promotion or promo-specific event/property. Server merging of duplicate lines can still change a malformed stored cart's total, and a checkout-start event is only a snapshot, not a guarantee of the eventual submitted cart. See [cart and pricing](cart-pricing.md) and [checkout](checkout.md).
 
 `releaseProperties` adds `appRepo`, `appVersion` (first seven commit characters), and `appEnvironment`. Browser initialization reads public Vercel repository/SHA/environment variables; missing values become `local`, `dev`, and `development`. `server/release.ts` uses the same helper with server Vercel variables for server exceptions.
 
@@ -59,4 +61,4 @@ Add event/flag keys and pure property builders in `lib/analytics.ts`, invoke `tr
 
 ## Scoped maintenance snapshot
 
-At `origin/main` `902a299`: **4 source files** (the first four table rows), **1 test file**, **1/4 = 0.25 test-file/source-file ratio**. Event call sites, shared layout, and server telemetry are integrations excluded from this scope. This is not coverage. Unique-human bus-factor proxy: **1**, derived from `.github/CODEOWNERS` plus scoped default-branch log/blame, normalizing Nicolas Schmidt aliases to nicolasschmidt2001 and excluding bots.
+At `origin/main` [`3461fc3`](https://github.com/FactoryDemo/demo-storefront-practice/commit/3461fc30f6b24b1cc8a7497bdfcd9e34c9bc90df): **4 source files** (the first four table rows), **1 test file**, **1/4 = 0.25 test-file/source-file ratio**. Event call sites, shared layout, and server telemetry are integrations excluded from this scope. This is not coverage. Unique-human bus-factor proxy: **1**, derived from `.github/CODEOWNERS` plus scoped default-branch log/blame, normalizing Nicolas Schmidt aliases to nicolasschmidt2001 and excluding bots.

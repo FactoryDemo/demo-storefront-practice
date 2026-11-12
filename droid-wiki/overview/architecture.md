@@ -21,7 +21,7 @@ graph LR
   API -->|logs and metrics| Telemetry["server/telemetry.ts"]
 ```
 
-`app/layout.tsx` mounts the shared `CartProvider`, header, drawer, and analytics bootstrap around every page. `components/Storefront.tsx` renders the static catalog; client product cards update quantities. `components/CartProvider.tsx` delays persistence writes until its initial storage read completes.
+`app/layout.tsx` mounts the shared `CartProvider`, header, drawer, and analytics bootstrap around every page. `components/Storefront.tsx` renders the static catalog; client product cards update quantities. `components/CartProvider.tsx` delays persistence writes until its initial storage read completes and stores only the cart items.
 
 | Layer | Important paths | Boundary |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ graph LR
 
 The order route calls `validateOrderRequest` and `buildOrder` in `lib/orders.ts`, never a browser-supplied total. The resulting order exists in the HTTP response and then in browser session storage, not a database. There is no order retrieval API (`app/api/orders/route.ts`, `components/lastOrder.ts`).
 
-An optional promotion hook exists in `lib/pricing.ts`, but its registry is empty in `lib/promotions.ts`; checkout does not accept promotion codes. See [cart pricing](../features/cart-pricing.md) and [checkout](../features/checkout.md).
+`lib/promotions.ts` retains an empty registry and normalized lookup. The optional `calculateCartTotal` promotion hook in `lib/pricing.ts` would receive all lines after bulk pricing, with no built-in non-stacking filter. No current UI or order request supplies a promo code, so checkout totals equal the sum of bulk-priced lines. See [cart pricing](../features/cart-pricing.md) and [checkout](../features/checkout.md).
 
 ## Optional external services
 
