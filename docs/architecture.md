@@ -50,8 +50,9 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent. `lib/promotions.ts` defines SAVE10, which takes 10% off the order
-   subtotal after bulk pricing. The order discount rounds once to the
+   cent. `lib/promotions.ts` defines SAVE10, which takes 10% off the
+   subtotal of non-bulk lines only. Finance rule FIN-212 forbids stacking
+   promos with bulk discounts. The order discount rounds once to the
    nearest cent (half cents round up). `calculatePromoDiscount` supplies
    the same discount to cart totals, summaries, and server pricing.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only

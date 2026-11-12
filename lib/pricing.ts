@@ -48,7 +48,8 @@ export function priceLines(items: CartItem[]): PricedLine[] {
 /**
  * Total for a whole cart, in cents: the sum of all line totals, less any
  * promo code discount. Bulk discounts apply per line; a mixed cart can have
- * discounted and undiscounted lines side by side. Unknown promo codes are
+ * discounted and undiscounted lines side by side. Promos never stack with
+ * bulk discounts (FIN-212). Unknown promo codes are
  * ignored, and the total never goes below zero.
  */
 export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
@@ -57,7 +58,7 @@ export function calculateCartTotal(items: CartItem[], promoCode?: string): numbe
   return subtotal - calculatePromoDiscount(lines, promoCode);
 }
 
-/** Order discount in cents, capped at the subtotal after bulk pricing. */
+/** Order discount in cents, excluding bulk-priced lines (FIN-212). */
 export function calculatePromoDiscount(
   lines: PricedLine[],
   promoCode?: string
@@ -66,8 +67,14 @@ export function calculatePromoDiscount(
   if (!promotion) {
     return 0;
   }
-  const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
-  return Math.max(0, Math.min(subtotal, promotion.discountCents(lines)));
+  const eligibleLines = lines.filter(
+    (line) => line.quantity < BULK_DISCOUNT_THRESHOLD
+  );
+  const subtotal = eligibleLines.reduce(
+    (sum, line) => sum + line.lineTotalCents,
+    0
+  );
+  return Math.max(0, Math.min(subtotal, promotion.discountCents(eligibleLines)));
 }
 
 function safeLookup(id: string): Product | null {

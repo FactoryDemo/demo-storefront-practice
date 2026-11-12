@@ -63,7 +63,7 @@ describe("cartProperties", () => {
   it("reports the total after the applied order promotion", () => {
     expect(
       cartProperties([{ productId: "drip", quantity: 3 }], "SAVE10")
-    ).toEqual({ lineCount: 1, itemCount: 3, totalCents: 850 });
+    ).toEqual({ lineCount: 1, itemCount: 3, totalCents: 945 });
   });
 
   it("counts lines and items and prices the cart with the bulk discount", () => {

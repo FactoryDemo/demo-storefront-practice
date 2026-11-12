@@ -149,8 +149,8 @@ describe("buildOrder", () => {
     const order = buildOrder(result.request, "BB-PROMO1", new Date(0));
     expect(order).toMatchObject({
       promoCode: "SAVE10",
-      promoDiscountCents: 124,
-      totalCents: 1116,
+      promoDiscountCents: 30,
+      totalCents: 1210,
       lines: [
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },

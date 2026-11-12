@@ -4,7 +4,7 @@ export type Promotion = {
   /** Uppercase code a customer types in the cart, e.g. "SAVE10". */
   code: string;
   description: string;
-  /** Cents off the order, given its lines after bulk pricing. */
+  /** Cents off the order, given only lines eligible for a promo. */
   discountCents(lines: PricedLine[]): number;
 };
 
@@ -18,7 +18,7 @@ export const PROMOTIONS: Promotion[] = [
         (sum, line) => sum + line.lineTotalCents,
         0
       );
-      // Round the order discount once, after all per-line bulk discounts.
+      // Round once on the eligible subtotal; bulk-priced lines are excluded.
       return Math.round(subtotal / 10);
     },
   },
