@@ -13,7 +13,7 @@ There is no order lookup endpoint. `/orders/[id]` is a browser confirmation page
 
 ## Place an order
 
-The browser sends only the pickup name, slot, and items with quantities (`components/Checkout.tsx`, `lib/orders.ts`):
+The browser sends only the pickup name, slot, and quantities (`components/Checkout.tsx`):
 
 ```json
 {
@@ -35,9 +35,7 @@ The browser sends only the pickup name, slot, and items with quantities (`compon
 
 Validation collects errors from the fields and items. Duplicate product IDs merge after per-item validation, so the merged quantity can exceed 99. Browser cart restoration does not enforce that cap either (`lib/cart.ts`). These are current semantics, not a claim of a production-safe maximum.
 
-Unrecognized extra fields, such as a supplied price, total, or discount amount, are ignored when building the validated request. This includes **any `promoCode` value**, regardless of its type or contents: it is neither validated nor normalized. `buildOrder` in `lib/orders.ts` re-prices against `lib/products.ts` using `priceLines(request.items)` and `calculateCartTotal(request.items)` from `lib/pricing.ts`, without a code.
-
-For the example, the bulk Drip Coffee line costs 945 cents and the full-price Espresso costs 295 cents, giving a **1,240-cent total**, equal to the sum of the lines (`tests/orders.test.ts`). See [cart pricing](features/cart-pricing.md) for bulk pricing and the dormant promotion hook; `lib/promotions.ts` has no registered codes.
+Extra fields such as a supplied total or promo code are not used to build the validated request. `buildOrder` re-prices against `lib/products.ts` through `lib/pricing.ts`. The current checkout does not support promotion codes.
 
 An illustrative 201 response:
 
@@ -54,8 +52,6 @@ An illustrative 201 response:
   "placedAt": "2026-11-12T12:00:00.000Z"
 }
 ```
-
-The response has only `id`, `name`, `pickup`, `lines`, `totalCents`, and `placedAt`. Lines contain post-bulk amounts, and their sum equals `totalCents`; there are no promotion or discount-breakdown fields (`lib/orders.ts`).
 
 The actual route creates `BB-` plus six uppercase UUID characters and the current timestamp (`app/api/orders/route.ts`). It does not store the result or guarantee global ID uniqueness.
 
@@ -78,10 +74,7 @@ Requests are unauthenticated mock actions. There is no idempotency key or durabl
 | `app/api/orders/route.ts` | Parse, validate, generate ID, price, record, and respond |
 | `app/api/health/route.ts` | Health response, uptime log, and health counter |
 | `lib/orders.ts` | Request/result types, validation, merging, pricing |
-| `lib/pricing.ts` | Catalog-based line pricing and cart totals |
-| `lib/promotions.ts` | Empty registry and dormant code lookup |
 | `server/telemetry.ts` | Wrapper, generic failure response, metrics, flush |
-| `tests/orders.test.ts` | Validation, duplicate merging, and exact 1,240-cent order contract |
-| `e2e/storefront.spec.ts` | API success with a 945-cent total, invalid-order rejection, and health response |
+| `e2e/storefront.spec.ts` | Existing production-build API smoke checks |
 
 See [pickup checkout](features/checkout.md) for browser handling and [data models](reference/data-models.md) for types.
