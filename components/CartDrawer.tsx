@@ -9,12 +9,14 @@ import {
   calculateCartTotal,
   calculateLineTotal,
 } from "../lib/pricing";
+import { findPromotion } from "../lib/promotions";
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
+import { PromoCodeField } from "./PromoCodeField";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, promoCode, isOpen, closeCart, changeQuantity } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -34,6 +36,11 @@ export function CartDrawer() {
   if (!isOpen) {
     return null;
   }
+
+  const subtotalCents = calculateCartTotal(items);
+  const totalCents = calculateCartTotal(items, promoCode);
+  const promoDiscountCents = subtotalCents - totalCents;
+  const promotion = findPromotion(promoCode);
 
   return (
     <>
@@ -74,9 +81,16 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <PromoCodeField />
+              {promotion && promoDiscountCents > 0 && (
+                <div className="cart-promo-discount">
+                  <span>{promotion.code} · 10% off</span>
+                  <span>−{formatCurrency(promoDiscountCents)}</span>
+                </div>
+              )}
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>{formatCurrency(totalCents)}</span>
               </div>
               <Link
                 href="/checkout"
