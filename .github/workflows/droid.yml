@@ -9,9 +9,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Starts with the pull request but reviews only once CI's test job, which
-  # includes Finance's checkout rules, has passed on the same commit. A red
-  # pull request gets no review until it is fixed.
+  # Runs alongside CI on every push to a pull request instead of waiting for
+  # the test job, so a red pull request is still reviewed.
   code-review:
     if: >-
       github.event.pull_request.draft == false &&
@@ -26,36 +25,12 @@ jobs:
       actions: read
       checks: write
     steps:
-      - name: Wait for CI test job
-        id: ci
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          for attempt in $(seq 1 60); do
-            result=$(gh api "repos/$REPO/commits/$SHA/check-runs?check_name=test" \
-              --jq '.check_runs | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
-            set -- $result
-            echo "test check: status=$1 conclusion=$2"
-            if [ "$1" = "completed" ]; then
-              echo "conclusion=$2" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            sleep 20
-          done
-          echo "conclusion=timed_out" >> "$GITHUB_OUTPUT"
-      - name: Skip review because CI test did not pass
-        if: steps.ci.outputs.conclusion != 'success'
-        run: echo "::notice::CI test finished as '${{ steps.ci.outputs.conclusion }}', so Droid review is skipped until a new push passes."
       - name: Checkout repository
-        if: steps.ci.outputs.conclusion == 'success'
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
       - name: Run Droid Auto Review
-        if: steps.ci.outputs.conclusion == 'success'
         uses: Factory-AI/droid-action@main
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
