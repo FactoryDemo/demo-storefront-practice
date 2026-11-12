@@ -6,9 +6,9 @@ The storefront is an unauthenticated demo with mock orders, not a production che
 
 `app/api/orders/route.ts` parses JSON as unknown and calls `validateOrderRequest` in `lib/orders.ts`. The server looks up products and recomputes totals through `lib/pricing.ts`. A browser-supplied price or total does not become part of the validated order.
 
-`promoCode` is untrusted input validated by `lib/orders.ts`: omitted or blank strings mean no code; recognized strings are normalized; null, nonstrings, and unknown codes are rejected. Arbitrary client totals, prices, and discount amounts are ignored. The server merges duplicate product IDs before repricing, so splitting one product into submitted entries cannot evade bulk-line eligibility.
+All unknown HTTP fields are ignored, including arbitrary client totals, prices, discount amounts, and **any `promoCode` value**. The latter is not validated, rejected, or normalized. The server merges duplicate product IDs before repricing, so splitting one product into submitted entries does not avoid bulk pricing (`lib/orders.ts`).
 
-SAVE10 in `lib/promotions.ts` accepts only post-bulk lines whose amounts still equal catalog price times quantity, preventing a second discount on bulk-priced lines. Its discount rounds once over the eligible subtotal; `lib/pricing.ts` clamps the final total at zero. The eligibility filter belongs to SAVE10, not a universal guard around future promotion callbacks. New codes need explicit rules and tests. See [cart pricing](features/cart-pricing.md).
+`buildOrder` calls `priceLines` and `calculateCartTotal` without a code. The optional pricing hook remains, but `PROMOTIONS` in `lib/promotions.ts` is empty, so every code is ignored by pricing. There is no active SAVE10/FIN-212 eligibility filter or general non-stacking guard; future promotions would need explicit rules and tests. See [cart pricing](features/cart-pricing.md).
 
 Each submitted quantity must be an integer from 1 through 99, but duplicates merge only afterward. Multiple valid entries can therefore produce a merged quantity above 99. There is no total-item count, request-body size, or rate-limit control implemented in the route. Do not treat per-entry validation as a global resource bound.
 
@@ -16,13 +16,13 @@ Each submitted quantity must be an integer from 1 through 99, but duplicates mer
 
 `lib/cart.ts` filters malformed stored cart entries, but does not deduplicate them or cap valid positive integer quantities at 99. `components/lastOrder.ts` casts parsed session data to an order without runtime schema validation.
 
-`components/CartProvider.tsx` restores cart JSON and raw promo text from separate localStorage keys. Writes wait for hydration; `clear` resets items and code, then persistence writes `[]` and an empty string rather than deleting the keys. Storage access exceptions are not caught there. The shared `components/PromoCodeField.tsx` displays immediate feedback, but browser lookup is not validation authority: an unknown code leaves the preview unchanged while the API rejects checkout until it is corrected or removed (`lib/pricing.ts`, `lib/orders.ts`).
+`components/CartProvider.tsx` restores only item JSON from `bean-and-byte:cart` in localStorage. Writes wait for hydration; `clear` resets items, then persistence writes `[]` rather than deleting the key. Storage access exceptions are not caught there. There is no promo UI or state, and no current reader, writer, or clearing behavior for an obsolete `bean-and-byte:promo` key left in a browser.
 
 Confirmation is consequently a local display of browser state, not proof of a stored transaction. `components/OrderConfirmation.tsx` matches the saved ID to the route, but that is not authorization. No payment, fulfillment, authentication, durable order store, or idempotency system exists. See [API](api.md) and [checkout](features/checkout.md).
 
 ## Personal data and logs
 
-Pickup names are accepted and returned to the browser, then stored with the last order. The accepted-order log deliberately omits the name and promo text (`app/api/orders/route.ts`); custom analytics properties omit both too (`lib/analytics.ts`). `cartProperties(items, promoCode?)` reports the adjusted total, not the raw code; promo support adds no new event. Rejected-code errors contain a fixed message, not the submitted text (`lib/orders.ts`).
+Pickup names are accepted and returned to the browser, then stored with the last order. The accepted-order log deliberately omits the name (`app/api/orders/route.ts`); custom analytics properties omit it too (`lib/analytics.ts`). `cartProperties(items)` emits only `lineCount`, `itemCount`, and `totalCents`: three Drip Coffees plus one Espresso report 1,240 cents. Neither cart nor order property builders emit personal data or promo text; see [analytics](features/analytics.md).
 
 `server/logger.ts` recursively redacts fields whose keys match sensitive words, including tokens, passwords, emails, cookies, and card-related keys. It does not redact the ordinary `name` key or scan message strings for secrets. Error messages and stacks are serialized as text. Avoid putting request bodies, headers, names, or credentials into free-form log messages.
 

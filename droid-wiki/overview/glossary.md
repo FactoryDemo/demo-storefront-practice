@@ -10,9 +10,8 @@ These terms connect the UI, pricing core, and operational tools. Types are defin
 | Cart line | Product ID and quantity, without a trusted price (`lib/types.ts`). |
 | Bulk threshold | Quantity three of the same product qualifies that line for 10% off (`lib/pricing.ts`). |
 | Priced line | Product ID, quantity, and computed `lineTotalCents` (`lib/types.ts`). |
-| Promotion | Discount function receiving lines after bulk pricing. The registry contains SAVE10, which discounts only full-price lines (`lib/promotions.ts`, `lib/pricing.ts`). |
-| Promo code | Optional cart and order field, matched without case or surrounding whitespace. The browser persists raw input; order validation returns a normalized uppercase code (`components/CartProvider.tsx`, `lib/promotions.ts`, `lib/orders.ts`). |
-| FIN-212 | Non-stacking rule: promo discounts must not reduce a line already discounted by bulk pricing. SAVE10 checks each priced line against its catalog gross (`lib/promotions.ts`, `tests/pricing.test.ts`). |
+| Promotion | Dormant extension contract for an order discount over post-bulk lines. The registry is empty (`lib/promotions.ts`, `lib/pricing.ts`). |
+| Promo code | Optional argument to the pure cart-total helper, matched after trimming and uppercasing. No current cart, checkout, or order field exposes it; all codes miss the empty registry (`lib/pricing.ts`, `lib/promotions.ts`, `lib/orders.ts`). |
 | Pickup slot | One of five fixed relative choices, not a reservation or stored fulfillment schedule (`lib/orders.ts`). |
 | Order | Server-priced response with an ID, pickup name and slot, lines, total, and timestamp (`lib/orders.ts`). |
 | Last order | Single session-storage value used by the confirmation page in the same tab (`components/lastOrder.ts`). |
