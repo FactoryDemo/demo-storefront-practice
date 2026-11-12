@@ -31,7 +31,7 @@ type PricedLine = {
 type Cart = { items: CartItem[] };
 ```
 
-`Cart` is a declared wrapper, but actual shared state and persisted cart JSON are **`CartItem[]`**, not `{ items: [...] }` (`components/CartProvider.tsx`). Context exposes only `items`, `itemCount`, `isLoaded`, `isOpen`, and `addItem`, `changeQuantity`, `clear`, `openCart`, `closeCart` actions. There is no promo state or setter; `clear` resets items.
+`Cart` is a declared wrapper, but actual shared state and persisted JSON are **`CartItem[]`**, not `{ items: [...] }` (`components/CartProvider.tsx`). Context also exposes `itemCount`, `isLoaded`, `isOpen`, and `addItem`, `changeQuantity`, `clear`, `openCart`, `closeCart` actions.
 
 `PRODUCTS` and `CATEGORIES` are mutable typed arrays with 13 products and four categories (`lib/products.ts`). `getProduct(id)` returns the matching object reference or throws; `productsInCategory` returns a filtered array containing those same references. Neither helper provides immutable snapshots. Names, images, and unit prices are looked up from the current catalog rather than stored on priced lines.
 
@@ -42,11 +42,7 @@ type Cart = { items: CartItem[] };
 ```ts
 type PickupSlotId = "asap" | "in-15" | "in-30" | "in-45" | "in-60";
 type PickupSlot = { id: PickupSlotId; label: string };
-type OrderRequest = {
-  name: string;
-  pickup: PickupSlotId;
-  items: CartItem[];
-};
+type OrderRequest = { name: string; pickup: PickupSlotId; items: CartItem[] };
 type Order = {
   id: string;
   name: string;
@@ -65,11 +61,9 @@ type OrderValidation =
 1. Name must be a string with trimmed length 1–60; the successful request contains the trimmed value.
 2. Pickup must match one of the five IDs, not an arbitrary timestamp.
 3. Items must be a nonempty array. Each submitted entry must reference a known product and have a numeric integer quantity 1–99. An entry can produce both product and quantity errors.
-4. Only after **all** validation passes are duplicate product IDs summed with a `Map`. Output preserves first-occurrence product order. Two entries of quantity 99 become one quantity-198 line: there is no post-merge 99 cap.
+4. Only after **all** entries pass are duplicate product IDs summed with a `Map`. Output preserves first-occurrence product order. Two entries of quantity 99 become one quantity-198 line: there is no post-merge 99 cap.
 
-Unknown extra fields are ignored when constructing the validated request, including any `promoCode` value: it is not rejected or normalized. Neither a browser-supplied price, total, nor discount becomes authoritative. `buildOrder` in `lib/orders.ts` assumes a validated request, calls `priceLines(request.items)` and `calculateCartTotal(request.items)` from `lib/pricing.ts` without a code, and serializes its supplied `Date` with `toISOString()`. `app/api/orders/route.ts` supplies an ID of `BB-` plus six uppercase UUID characters and the current timestamp; the type itself does not validate ID format or uniqueness.
-
-`Order.lines` contains post-bulk amounts whose sum equals `Order.totalCents`. Three Drip Coffees and one Espresso produce line totals of 945 and 295 cents and a total of 1,240 cents (`tests/orders.test.ts`). Neither `OrderRequest` nor `Order` has a promo field. There is no discount-breakdown field on `Order` or `PricedLine`, and `components/OrderLines.tsx` renders only lines, bulk tags, and the total.
+Unknown extra fields are ignored when constructing the validated request. Neither a browser-supplied price nor a total becomes authoritative. `buildOrder` assumes a validated request, re-prices using `lib/pricing.ts`, and serializes its supplied `Date` with `toISOString()`. `app/api/orders/route.ts` supplies an ID of `BB-` plus six uppercase UUID characters and the current timestamp; the type itself does not validate ID format or uniqueness.
 
 ## Browser storage boundaries
 
@@ -78,9 +72,7 @@ Unknown extra fields are ignored when constructing the validated request, includ
 | `bean-and-byte:cart`, localStorage | Array filtered to known product IDs and positive integer quantities. Missing/invalid JSON or nonarray input becomes empty. No 99 cap, deduplication, or removal of extra fields from retained objects. | `lib/cart.ts`, `components/CartProvider.tsx` |
 | `bean-and-byte:last-order`, sessionStorage | Entire last `Order`; read uses a type assertion, not schema validation. Exceptions return null; writes are best effort. Confirmation requires its ID to match the URL. | `components/lastOrder.ts`, `components/OrderConfirmation.tsx` |
 
-Cart hydration guards writes until the saved cart is read, but storage access exceptions are not caught there. Items persist across reloads/visits until changed or cleared; clearing writes `[]`, not key deletion (`components/CartProvider.tsx`). There is no current reader, writer, or clearing behavior for the obsolete `bean-and-byte:promo` localStorage key.
-
-The last-order record is tab/session-scoped and overwritten by the next successful order; checkout saves it before clearing cart state (`components/Checkout.tsx`, `components/lastOrder.ts`). Stored duplicates remain separate during browser pricing; server merging can change bulk pricing. Last-order totals survive as JSON, but display labels still resolve against the current catalog. Browser values are neither trusted server records nor cross-device history.
+Cart hydration guards writes until the first read, but storage access exceptions are not caught there. Stored duplicates remain separate during browser pricing; server merging can change discount eligibility. Last-order totals survive as JSON, but display labels still resolve against the current catalog. Browser values are neither trusted server records nor cross-device history.
 
 ## Analytics and promotions
 
@@ -94,8 +86,6 @@ The last-order record is tab/session-scoped and overwritten by the next successf
 | `orderProperties` | `orderId`, `pickup`, `lineCount`, `itemCount`, `totalCents` |
 | `order_failed` in `components/Checkout.tsx` | `errorCount` |
 
-`Promotion` in `lib/promotions.ts` has `code: string`, `description: string`, and `discountCents(lines: PricedLine[]): number`. `PROMOTIONS` is an empty `Promotion[]`. `findPromotion(code)` still trims/uppercases input, but currently returns null for every code. `calculateCartTotal(items, promoCode?)` in `lib/pricing.ts` retains a dormant hook that would pass all post-bulk lines to a matching callback, subtract its discount, and clamp at zero. With no registered promotions, every code leaves the line sum unchanged. There is no active SAVE10/FIN-212 filter or non-stacking rule in this contract.
-
-`cartProperties(items)` calls shared pricing without a code; order properties use the server-priced `Order.totalCents` (`lib/analytics.ts`). The mixed cart above yields `{ lineCount: 2, itemCount: 4, totalCents: 1240 }` (`tests/analytics.test.ts`). The exact property keys above are unchanged: neither builder emits promo text or the customer's name. Duplicate merging at the server boundary can still change a malformed restored cart's line grouping (`lib/cart.ts`, `lib/orders.ts`).
+`Promotion` in `lib/promotions.ts` has `code: string`, `description: string`, and `discountCents(lines: PricedLine[]): number`. Lookup trims/uppercases input; the registry is empty. There is no promotion field in `OrderRequest` or checkout support.
 
 See [cart pricing](../features/cart-pricing.md), [checkout](../features/checkout.md), and the [HTTP API](../api.md) for behavior and responses.

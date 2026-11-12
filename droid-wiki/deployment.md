@@ -41,17 +41,15 @@ For a regression tied to a deploy marker, `docs/runbooks/observability.md` direc
 
 `.github/workflows/observability.yml` provisions `observability/grafana/dashboard.json` and `observability/grafana/alert-rules.json` through `scripts/grafana-sync.mjs` when relevant files change on `main`, or manually. This is an authenticated external write, not a local validation command.
 
-The documentation pipeline in `.github/workflows/droid-wiki-refresh.yml` runs on pushes to `main`, except when every changed path is under `droid-wiki/`. Merging generated pages alone therefore does not trigger another refresh:
+The documentation pipeline in `.github/workflows/droid-wiki-refresh.yml` also runs on `main`:
 
 | Stage | Behavior |
 | --- | --- |
 | Restore | Fetch `factory/droid-wiki` and restore only `droid-wiki/`; first run can generate from scratch |
 | Generate | Use full history and run `/wiki` in a repository-read-only job |
 | Transfer | Upload Markdown and hidden metadata as a one-day artifact; exclude video and images |
-| Publish | Separate job with repository/PR writes opens or updates one rolling PR against the default branch, then requests squash auto-merge |
+| Publish | Separate job with repository/PR writes opens or updates one rolling PR against the default branch |
 
 The fixed concurrency group queues refreshes rather than canceling the current one. `FACTORY_WIKI_PR_TOKEN` can provide scoped write access; fallback `GITHUB_TOKEN` PRs do not trigger other workflows. A publish failure becomes a warning rather than erasing the already-generated wiki. Source files in the restored wiki remain input, not permission to grant generation a write token.
-
-When the PR action returns a number, `.github/workflows/droid-wiki-refresh.yml` runs `gh pr merge` with `--squash --auto`, using the same token as publication. Required checks and reviews still apply; the workflow does not bypass branch protection. If auto-merge cannot be enabled, it emits a warning and leaves the PR available for manual review and merge. Check repository auto-merge settings, squash-merge availability, and token permissions. The fallback token can leave required checks waiting because its PRs do not trigger workflows.
 
 See [tooling](how-to-contribute/tooling.md) for checks and [alerting](how-to-monitor/alerting.md) for operational scripts.

@@ -10,10 +10,6 @@ Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the projec
 
 Add pricing rules in `lib/pricing.ts`, then use them from the UI and `lib/orders.ts`. Do not duplicate arithmetic in a component or trust totals in an HTTP request. Currency values remain integer cents; `lib/currency.ts` handles display. The current bulk calculation uses a fractional rate and rounds the resulting line to a whole cent.
 
-`lib/promotions.ts` defines an empty registry. The dormant hook in `lib/pricing.ts` ignores unknown codes; a future matching callback would receive all post-bulk lines, with its discount subtracted and the total clamped at zero. The interface does not enforce eligibility, rounding, or non-stacking rules. No promotion callback is currently registered.
-
-The cart, checkout, and order types have no promo field (`components/CartProvider.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). Adding a promotion would require explicit product rules, server/client integration, and corresponding coverage in `tests/pricing.test.ts`, `tests/orders.test.ts`, and `e2e/storefront.spec.ts`; populating the registry alone would not expose it to checkout.
-
 ## Types and names
 
 Prefer named exports and explicit types. Next.js route/page export conventions still apply. `lib/types.ts` holds shared catalog and cart types; `lib/orders.ts` holds order-specific types.
