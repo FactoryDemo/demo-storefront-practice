@@ -39,6 +39,8 @@ Most checks run on pushes to `main` and PRs. DAST runs weekly on Monday at 06:00
 
 `.github/workflows/droid.yml` runs automatic deep/security review alongside CI, not after test success. `.github/workflows/droid-tag.yml` handles PR comments mentioning `@droid`. Dependabot configuration is monthly, grouped, and excludes major updates (`.github/dependabot.yml`).
 
-`.github/workflows/droid-wiki-refresh.yml` restores documentation from `factory/droid-wiki`, invokes `/wiki` in a read-only job, and hands Markdown plus metadata to a separate write-enabled publish job. The latter opens or updates a rolling PR against the default branch. Images and videos stay out of the artifact/commit; `droid-wiki/.wiki-meta.json` is retained for incremental runs.
+`.github/workflows/droid-wiki-refresh.yml` restores documentation from `factory/droid-wiki`, invokes `/wiki` in a read-only job, and hands Markdown plus metadata to a separate write-enabled publish job. It runs on every push to `main`, including pushes that change only `droid-wiki/`. Images and videos stay out of the artifact/commit; `droid-wiki/.wiki-meta.json` is retained for incremental runs.
+
+The publish job opens or updates a rolling PR against the default branch for review and merge; it does not request auto-merge. Publication uses `FACTORY_WIKI_PR_TOKEN` when set, otherwise `github.token`. A publication failure produces a warning rather than failing the run. The fallback token does not trigger PR workflows, which can leave required checks waiting. See [deployment](../deployment.md) for publication boundaries.
 
 Operational scripts can mutate remote dashboards or issues. Do not run `scripts/grafana-sync.mjs`, `scripts/posthog-error-issues.mjs`, or `scripts/grafana-alert-issues.mjs` as harmless local checks. Their intended workflow is documented in [deployment](../deployment.md) and [alerting](../how-to-monitor/alerting.md).

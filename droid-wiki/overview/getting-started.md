@@ -31,6 +31,8 @@ Expect HTTP 200 and `{"status":"ok"}` from `app/api/health/route.ts`.
 
 These values come from `lib/products.ts` and `lib/pricing.ts`; the server response is covered in `tests/orders.test.ts`, and the browser scenario is in `e2e/storefront.spec.ts`. Nothing is charged.
 
+Reloading restores cart quantities, and placing an order clears the cart (`components/CartProvider.tsx`, `components/Checkout.tsx`, `e2e/storefront.spec.ts`). There is no promo field in the current cart or checkout, and `lib/promotions.ts` has no active codes. Follow the $12.40 flow above rather than the historical SAVE10 examples in [lore](../lore.md).
+
 ## Required checks
 
 ```bash
