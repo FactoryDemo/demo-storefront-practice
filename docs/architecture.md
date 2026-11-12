@@ -48,7 +48,12 @@ flowchart LR
 3. **Pricing core.** `calculateLineTotal`, `priceLines`, and
    `calculateCartTotal` in `lib/pricing.ts` turn quantities into integer
    cents. A line of 3 or more of one item is 10% off, rounded to the nearest
-   cent.
+   cent. Under Finance rule FIN-212, promo codes never stack with bulk
+   discounts. `SAVE10` takes 10% off only non-bulk lines, with the discount
+   rounded once to the nearest cent across those eligible lines. Codes are
+   case-insensitive and ignore surrounding whitespace. The cart and checkout
+   offer a promo field; its value persists alongside the cart and clears
+   after ordering.
 4. **Currency formatting.** `formatCurrency` in `lib/currency.ts` is the only
    place cents become a display string such as `$9.45`.
 
@@ -59,7 +64,7 @@ sequenceDiagram
   participant B as Browser (components/Checkout.tsx)
   participant R as POST /api/orders
   participant O as lib/orders.ts
-  B->>R: name, pickup slot, items
+  B->>R: name, pickup slot, items, optional promo code
   R->>O: validateOrderRequest
   O-->>R: errors, or a clean request
   R->>O: buildOrder (re-prices from the catalog)
@@ -73,6 +78,8 @@ sequenceDiagram
 - `validateOrderRequest` rejects blank or long names, unknown pickup slots,
   empty carts, unknown products, and quantities outside 1 to 99, and merges
   repeated products into one line.
+- Checkout rejects unknown or malformed promo codes. The server applies
+  valid codes through the same pricing core as the cart.
 - Orders are not stored. The confirmation page (`app/orders/[id]/page.tsx`)
   reads the last order from `sessionStorage` in the same tab.
 
