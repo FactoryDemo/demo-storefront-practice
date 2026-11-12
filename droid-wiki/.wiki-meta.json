@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-11-12T17:30:03.701Z",
+  "commitHash": "902a299dca0038fcfb243854170ec73b89f89d9e",
+  "branch": "main",
+  "pageCount": 31,
+  "topLevelSections": [
+    "overview",
+    "by-the-numbers",
+    "lore",
+    "how-to-contribute",
+    "features",
+    "api",
+    "deployment",
+    "security",
+    "how-to-monitor",
+    "background",
+    "cleanup-opportunities",
+    "reference"
+  ],
+  "pageOrder": [
+    "overview/index.md",
+    "overview/architecture.md",
+    "overview/getting-started.md",
+    "overview/glossary.md",
+    "by-the-numbers.md",
+    "lore.md",
+    "how-to-contribute/index.md",
+    "how-to-contribute/development-workflow.md",
+    "how-to-contribute/testing.md",
+    "how-to-contribute/debugging.md",
+    "how-to-contribute/patterns-and-conventions.md",
+    "how-to-contribute/tooling.md",
+    "features/index.md",
+    "features/catalog.md",
+    "features/cart-pricing.md",
+    "features/checkout.md",
+    "features/analytics.md",
+    "api.md",
+    "deployment.md",
+    "security.md",
+    "how-to-monitor/index.md",
+    "how-to-monitor/logging.md",
+    "how-to-monitor/metrics.md",
+    "how-to-monitor/tracing.md",
+    "how-to-monitor/alerting.md",
+    "background.md",
+    "cleanup-opportunities.md",
+    "reference/index.md",
+    "reference/configuration.md",
+    "reference/data-models.md",
+    "reference/dependencies.md"
+  ],
+  "warnings": [
+    "Phase 3.5 skipped: .factory/skills/qa/config.yaml is missing. Run /install-qa to enable screenshots.",
+    "Existing dependency audit found 20 vulnerable package entries: 11 moderate, 5 high, 4 critical. See cleanup-opportunities.md."
+  ],
+  "videoOverview": {
+    "status": "failed",
+    "warnings": [
+      "HyperFrames 0.4.44 doctor reported missing FFmpeg and FFprobe. Although the CLI exited 0, its required checks failed, so no video was rendered."
+    ]
+  }
+}
