@@ -16,7 +16,7 @@ Vitest uses the Node environment and includes `tests/**/*.test.ts`. Tests mirror
 | --- | --- |
 | `tests/pricing.test.ts` | Below/at/above discount threshold, nonpositive quantities, mixed carts, unknown products/codes, currency display |
 | `tests/cart.test.ts` | Adding, incrementing, removing, counts, malformed saved data |
-| `tests/orders.test.ts` | Names, pickup slots, item validation, duplicate merging, server-priced order shape |
+| `tests/orders.test.ts` | Names, pickup slots, item validation, duplicate merging, server-priced order shape and total |
 | `tests/products.test.ts` | Catalog structure and lookup behavior |
 | `tests/analytics.test.ts` | Event/flag names, release tags, and privacy-safe properties |
 | `tests/logger.test.ts` | Structured output, levels, key-based redaction, serialization |
@@ -48,6 +48,8 @@ npm run test:e2e
 `e2e/storefront.spec.ts` has six scenarios: catalog rendering, discounted lines, cart reload persistence, checkout confirmation/cart clearing, order API validation/repricing, and health. The helper waits for hydration before clicking.
 
 The checkout scenario pins three Drip Coffees to $9.45, plus one Espresso to $12.40. It verifies the same confirmation total and empty cart. See [cart pricing](../features/cart-pricing.md) and [API](../api.md).
+
+There is no dedicated promotion test module or promo browser scenario in the current tree. The only promo-specific unit assertion checks that an unknown code leaves pricing unchanged; the registry is empty (`tests/pricing.test.ts`, `lib/promotions.ts`). The API scenario checks the known 945-cent bulk total and rejection of an invalid order, but does not submit a forged total (`e2e/storefront.spec.ts`).
 
 ## Manual QA and gaps
 

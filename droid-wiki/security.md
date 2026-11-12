@@ -6,11 +6,15 @@ The storefront is an unauthenticated demo with mock orders, not a production che
 
 `app/api/orders/route.ts` parses JSON as unknown and calls `validateOrderRequest` in `lib/orders.ts`. The server looks up products and recomputes totals through `lib/pricing.ts`. A browser-supplied price or total does not become part of the validated order.
 
+Extra fields, including `promoCode`, are ignored by `lib/orders.ts`, not validated or forwarded. There are no live promotions in `lib/promotions.ts`. The dormant pricing hook in `lib/pricing.ts` has no non-stacking filter; adding a future code requires an explicit eligibility and validation design rather than assuming those controls already exist.
+
 Each submitted quantity must be an integer from 1 through 99, but duplicates merge only afterward. Multiple valid entries can therefore produce a merged quantity above 99. There is no total-item count, request-body size, or rate-limit control implemented in the route. Do not treat per-entry validation as a global resource bound.
 
 ## Browser storage is not authority
 
 `lib/cart.ts` filters malformed stored cart entries, but does not deduplicate them or cap valid positive integer quantities at 99. `components/lastOrder.ts` casts parsed session data to an order without runtime schema validation.
+
+`components/CartProvider.tsx` reads and writes only the cart-item key and clears only items. It does not use or remove a promo value left by an older version. There is no current promo input or browser-controlled discount path (`components/CartDrawer.tsx`, `components/Checkout.tsx`).
 
 Confirmation is consequently a local display of browser state, not proof of a stored transaction. `components/OrderConfirmation.tsx` matches the saved ID to the route, but that is not authorization. No payment, fulfillment, authentication, durable order store, or idempotency system exists. See [API](api.md) and [checkout](features/checkout.md).
 
