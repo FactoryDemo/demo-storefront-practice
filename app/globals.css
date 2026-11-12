@@ -489,6 +489,59 @@ main {
   padding: 20px 24px 24px;
   border-top: 1px solid var(--line);
   background: var(--bg);
+  max-height: 75%;
+  overflow-y: auto;
+}
+
+.promo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-controls,
+.promo-applied {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.promo-controls input {
+  min-width: 0;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--sand-deep);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.promo-applied {
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.promo-applied button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.promo-form .form-errors {
+  margin: 0;
+}
+
+.promo-discount {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--accent);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-lines .promo-discount {
+  margin-bottom: 16px;
 }
 
 .bulk-note {

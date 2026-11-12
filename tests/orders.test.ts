@@ -97,9 +97,67 @@ describe("validateOrderRequest", () => {
       { productId: "espresso", quantity: 1 },
     ]);
   });
+
+  it("accepts and normalizes SAVE10 while ignoring client-supplied totals", () => {
+    expect(
+      validateOrderRequest({
+        ...VALID,
+        promoCode: "  save10  ",
+        totalCents: 1,
+        promoDiscountCents: 99999,
+      })
+    ).toEqual({
+      ok: true,
+      request: { ...VALID, promoCode: "SAVE10" },
+    });
+  });
+
+  it.each(["", "   "])("treats a blank promo code as no promo", (promoCode) => {
+    expect(validateOrderRequest({ ...VALID, promoCode })).toEqual({
+      ok: true,
+      request: VALID,
+    });
+  });
+
+  it.each(["NOPE", 10, null, [], {}])(
+    "rejects unknown or malformed promo code %j",
+    (promoCode) => {
+      expect(errorsFor({ ...VALID, promoCode })).toEqual([
+        "Enter a valid promo code.",
+      ]);
+    }
+  );
 });
 
 describe("buildOrder", () => {
+  it("recomputes SAVE10 from the catalog after merging duplicate lines", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      items: [
+        { productId: "drip", quantity: 1 },
+        { productId: "drip", quantity: 2 },
+        { productId: "espresso", quantity: 1 },
+      ],
+      promoCode: "save10",
+      totalCents: 1,
+      promoDiscountCents: 99999,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("Expected a valid promo order");
+    }
+    const order = buildOrder(result.request, "BB-PROMO1", new Date(0));
+    expect(order).toMatchObject({
+      promoCode: "SAVE10",
+      promoDiscountCents: 124,
+      totalCents: 1116,
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
+    });
+  });
+
   it("prices lines and the total from the catalog", () => {
     const order = buildOrder(
       {

@@ -8,13 +8,17 @@ import {
   BULK_DISCOUNT_THRESHOLD,
   calculateCartTotal,
   calculateLineTotal,
+  calculatePromoDiscount,
+  priceLines,
 } from "../lib/pricing";
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
+import { PromoCodeForm } from "./PromoCodeForm";
+import { PromoDiscount } from "./PromoDiscount";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, promoCode, isOpen, closeCart, changeQuantity } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -74,9 +78,19 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <PromoCodeForm />
+              <PromoDiscount
+                promoCode={promoCode}
+                discountCents={calculatePromoDiscount(
+                  priceLines(items),
+                  promoCode
+                )}
+              />
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>
+                  {formatCurrency(calculateCartTotal(items, promoCode))}
+                </span>
               </div>
               <Link
                 href="/checkout"
