@@ -2,20 +2,31 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatCurrency } from "../lib/currency";
 import {
   BULK_DISCOUNT_THRESHOLD,
   calculateCartTotal,
   calculateLineTotal,
 } from "../lib/pricing";
+import { findPromotion } from "../lib/promotions";
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, isOpen, closeCart, changeQuantity, promoCode, setPromoCode } =
+    useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
+  const [promoDraft, setPromoDraft] = useState(promoCode);
+  const [promoError, setPromoError] = useState("");
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setPromoDraft("");
+      setPromoError("");
+    }
+  }, [items.length]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -74,9 +85,66 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <form
+                className="promo-form"
+                onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                  event.preventDefault();
+                  const promotion = findPromotion(promoDraft);
+                  if (!promotion) {
+                    setPromoError("That promo code isn’t valid.");
+                    setPromoCode("");
+                    return;
+                  }
+                  setPromoCode(promotion.code);
+                  setPromoDraft(promotion.code);
+                  setPromoError("");
+                }}
+              >
+                <label className="field" htmlFor="cart-promo-code">
+                  <span>Promo code</span>
+                  <input
+                    id="cart-promo-code"
+                    name="promoCode"
+                    value={promoDraft}
+                    onChange={(event) => {
+                      setPromoDraft(event.target.value);
+                      setPromoCode("");
+                      setPromoError("");
+                    }}
+                    autoComplete="off"
+                  />
+                </label>
+                <button type="submit" className="button button-secondary">
+                  Apply
+                </button>
+              </form>
+              {promoError && (
+                <p className="promo-message" role="alert">
+                  {promoError}
+                </p>
+              )}
+              {promoCode && (
+                <p className="promo-message" role="status">
+                  {promoCode} applied: 10% off your order.
+                </p>
+              )}
+              {promoCode && (
+                <div className="cart-promo-discount">
+                  <span>{promoCode} discount</span>
+                  <span>
+                    −
+                    {formatCurrency(
+                      calculateCartTotal(items) -
+                        calculateCartTotal(items, promoCode)
+                    )}
+                  </span>
+                </div>
+              )}
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>
+                  {formatCurrency(calculateCartTotal(items, promoCode))}
+                </span>
               </div>
               <Link
                 href="/checkout"

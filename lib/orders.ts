@@ -1,4 +1,5 @@
 import { calculateCartTotal, priceLines } from "./pricing";
+import { findPromotion } from "./promotions";
 import { PRODUCTS } from "./products";
 import type { CartItem, PricedLine } from "./types";
 
@@ -25,6 +26,7 @@ export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
+  promoCode?: string;
 };
 
 /** A placed order. Totals are computed on the server from the catalog. */
@@ -34,6 +36,7 @@ export type Order = {
   pickup: PickupSlotId;
   lines: PricedLine[];
   totalCents: number;
+  promoCode?: string;
   placedAt: string;
 };
 
@@ -48,11 +51,12 @@ export function validateOrderRequest(input: unknown): OrderValidation {
   if (typeof input !== "object" || input === null) {
     return { ok: false, errors: ["Order must be a JSON object."] };
   }
-  const { name, pickup, items } = input as Record<string, unknown>;
+  const { name, pickup, items, promoCode } = input as Record<string, unknown>;
   const errors = [
     ...validateName(name),
     ...validatePickup(pickup),
     ...validateItems(items),
+    ...validatePromoCode(promoCode),
   ];
   if (errors.length > 0) {
     return { ok: false, errors };
@@ -63,6 +67,9 @@ export function validateOrderRequest(input: unknown): OrderValidation {
       name: (name as string).trim(),
       pickup: pickup as PickupSlotId,
       items: mergeItems(items as CartItem[]),
+      ...(typeof promoCode === "string" && promoCode.trim()
+        ? { promoCode: findPromotion(promoCode)?.code }
+        : {}),
     },
   };
 }
@@ -78,7 +85,8 @@ export function buildOrder(
     name: request.name,
     pickup: request.pickup,
     lines: priceLines(request.items),
-    totalCents: calculateCartTotal(request.items),
+    totalCents: calculateCartTotal(request.items, request.promoCode),
+    ...(request.promoCode ? { promoCode: request.promoCode } : {}),
     placedAt: placedAt.toISOString(),
   };
 }
@@ -107,6 +115,16 @@ function validateItems(items: unknown): string[] {
     return ["Add at least one item to the order."];
   }
   return items.flatMap(validateItem);
+}
+
+function validatePromoCode(promoCode: unknown): string[] {
+  if (promoCode === undefined || promoCode === null || promoCode === "") {
+    return [];
+  }
+  if (typeof promoCode !== "string" || !findPromotion(promoCode)) {
+    return ["Promo code is not valid."];
+  }
+  return [];
 }
 
 function validateItem(item: unknown, index: number): string[] {

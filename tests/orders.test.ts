@@ -27,6 +27,25 @@ describe("validateOrderRequest", () => {
     });
   });
 
+  it("accepts a valid promo code case-insensitively", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result).toEqual({
+      ok: true,
+      request: {
+        name: "Ada",
+        pickup: "asap",
+        items: VALID.items,
+        promoCode: "SAVE10",
+      },
+    });
+  });
+
+  it("rejects an unknown promo code", () => {
+    expect(errorsFor({ ...VALID, promoCode: "UNKNOWN" })).toEqual([
+      "Promo code is not valid.",
+    ]);
+  });
+
   it("rejects input that is not an object", () => {
     expect(errorsFor(null)).toEqual(["Order must be a JSON object."]);
     expect(errorsFor("order")).toEqual(["Order must be a JSON object."]);
@@ -124,6 +143,21 @@ describe("buildOrder", () => {
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
     });
+  });
+
+  it("applies an accepted promo code when building the order", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "asap",
+        items: [{ productId: "drip", quantity: 3 }], // bulk: 945
+        promoCode: "SAVE10",
+      },
+      "BB-TEST02",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.totalCents).toBe(850);
+    expect(order.promoCode).toBe("SAVE10");
   });
 });
 
