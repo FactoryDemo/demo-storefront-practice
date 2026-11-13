@@ -8,6 +8,8 @@ Start from `main` and create `feature/<kebab-case-slug>`. Preserve existing unco
 
 Trace the real call path before editing. For a money change, inspect `lib/pricing.ts`, its consumers in `components/`, and the server path through `lib/orders.ts`. For an API route, keep the `withTelemetry` wrapper from `server/telemetry.ts`.
 
+Build from the request and current code, not an earlier attempt. `AGENTS.md` prohibits reading, reusing, or reverting reverted commits, closed or merged PRs, and `Rehearsal-*` commits; do not run `git show`, `git log -p`, or `git revert` on them.
+
 Add module tests in `tests/` and update browser coverage in `e2e/storefront.spec.ts` when the change crosses page or request boundaries.
 
 ## Validate and commit
