@@ -41,15 +41,17 @@ For a regression tied to a deploy marker, `docs/runbooks/observability.md` direc
 
 `.github/workflows/observability.yml` provisions `observability/grafana/dashboard.json` and `observability/grafana/alert-rules.json` through `scripts/grafana-sync.mjs` when relevant files change on `main`, or manually. This is an authenticated external write, not a local validation command.
 
-The documentation pipeline in `.github/workflows/droid-wiki-refresh.yml` also runs on `main`:
+The documentation pipeline in `.github/workflows/droid-wiki-refresh.yml` runs on every push to `main`. There is no path exclusion, so merging generated pages also triggers a refresh:
 
 | Stage | Behavior |
 | --- | --- |
 | Restore | Fetch `factory/droid-wiki` and restore only `droid-wiki/`; first run can generate from scratch |
 | Generate | Use full history and run `/wiki` in a repository-read-only job |
 | Transfer | Upload Markdown and hidden metadata as a one-day artifact; exclude video and images |
-| Publish | Separate job with repository/PR writes opens or updates one rolling PR against the default branch |
+| Publish | Separate job with repository/PR writes opens or updates one rolling PR against the default branch for review and merge |
 
 The fixed concurrency group queues refreshes rather than canceling the current one. `FACTORY_WIKI_PR_TOKEN` can provide scoped write access; fallback `GITHUB_TOKEN` PRs do not trigger other workflows. A publish failure becomes a warning rather than erasing the already-generated wiki. Source files in the restored wiki remain input, not permission to grant generation a write token.
+
+The workflow does not request auto-merge or run `gh pr merge`. Review and merge the rolling PR separately, following the repository's branch rules. The fallback token can leave required checks waiting because its PRs do not trigger workflows.
 
 See [tooling](how-to-contribute/tooling.md) for checks and [alerting](how-to-monitor/alerting.md) for operational scripts.
