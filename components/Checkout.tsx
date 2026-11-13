@@ -73,7 +73,11 @@ export function Checkout() {
       </section>
       <aside className="checkout-summary" aria-labelledby="summary-title">
         <h2 id="summary-title">Order summary</h2>
-        <OrderLines lines={priceLines(items)} totalCents={total} />
+        <OrderLines
+          lines={priceLines(items)}
+          totalCents={total}
+          promoCode={promoCode}
+        />
         <Link href="/" className="text-link">
           ← Keep shopping
         </Link>

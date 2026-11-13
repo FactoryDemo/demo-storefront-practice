@@ -9,7 +9,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { findPromotion } from "../lib/promotions";
 import { ANALYTICS_EVENTS, cartProperties } from "../lib/analytics";
 import {
   addItem as addCartItem,
@@ -17,11 +16,11 @@ import {
   countItems,
   parseStoredCart,
 } from "../lib/cart";
+import { findPromotion } from "../lib/promotions";
 import type { CartItem } from "../lib/types";
 import { track } from "./posthog";
 
 const STORAGE_KEY = "bean-and-byte:cart";
-const PROMO_STORAGE_KEY = "bean-and-byte:promo";
 
 type CartContextValue = {
   items: CartItem[];
@@ -33,7 +32,7 @@ type CartContextValue = {
   changeQuantity: (productId: string, delta: number) => void;
   /** The applied promo code (uppercase), or null. */
   promoCode: string | null;
-  /** Applies a code if it is a live promotion; returns whether it was. */
+  /** Applies a live promo code; returns false for an unknown one. */
   applyPromoCode: (code: string) => boolean;
   removePromoCode: () => void;
   clear: () => void;
@@ -52,8 +51,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setItems(parseStoredCart(window.localStorage.getItem(STORAGE_KEY)));
-    const savedPromo = window.localStorage.getItem(PROMO_STORAGE_KEY);
-    setPromoCode(savedPromo && findPromotion(savedPromo) ? savedPromo : null);
     setIsLoaded(true);
   }, []);
 
@@ -63,17 +60,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
   }, [items, isLoaded]);
-
-  useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
-    if (promoCode) {
-      window.localStorage.setItem(PROMO_STORAGE_KEY, promoCode);
-    } else {
-      window.localStorage.removeItem(PROMO_STORAGE_KEY);
-    }
-  }, [promoCode, isLoaded]);
 
   const addItem = useCallback((productId: string) => {
     setItems((current) => addCartItem(current, productId));
@@ -85,7 +71,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const applyPromoCode = useCallback((code: string) => {
     const promotion = findPromotion(code);
-    setPromoCode(promotion ? promotion.code : null);
+    if (promotion) {
+      setPromoCode(promotion.code);
+    }
     return promotion !== null;
   }, []);
 

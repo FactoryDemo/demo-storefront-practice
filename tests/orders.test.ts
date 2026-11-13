@@ -30,14 +30,15 @@ describe("promo codes", () => {
     expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual(message);
   });
 
-  it("treats an empty or missing code as no code", () => {
-    expect(errorsFor({ ...VALID, promoCode: "" })).toEqual([]);
-    const result = validateOrderRequest({ ...VALID, promoCode: "" });
-    expect(result.ok && "promoCode" in result.request).toBe(false);
+  it("treats a missing or blank code as no code", () => {
+    for (const promoCode of [undefined, null, "", "  "]) {
+      const result = validateOrderRequest({ ...VALID, promoCode });
+      expect(result.ok && "promoCode" in result.request).toBe(false);
+    }
   });
 
   it("prices the order with the promo on the server", () => {
-    const items = [{ productId: "latte", quantity: 2 }]; // 950, no bulk discount
+    const items = [{ productId: "latte", quantity: 2 }]; // 950
     const result = validateOrderRequest({ ...VALID, items, promoCode: "SAVE10" });
     if (!result.ok) throw new Error("expected valid request");
     const order = buildOrder(result.request, "BB-1", new Date(0));
@@ -45,11 +46,12 @@ describe("promo codes", () => {
     expect(order.promoCode).toBe("SAVE10");
   });
 
-  it("does not stack the promo with the bulk discount", () => {
-    const result = validateOrderRequest({ ...VALID, promoCode: "SAVE10" });
+  it("omits promoCode from an order without one", () => {
+    const result = validateOrderRequest(VALID);
     if (!result.ok) throw new Error("expected valid request");
     const order = buildOrder(result.request, "BB-1", new Date(0));
     expect(order.totalCents).toBe(945);
+    expect("promoCode" in order).toBe(false);
   });
 });
 

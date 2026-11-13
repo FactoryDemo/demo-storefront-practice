@@ -4,19 +4,24 @@ export type Promotion = {
   /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
   code: string;
   description: string;
-  /** Cents off the order, given only the lines eligible for promo codes (no bulk pricing). */
+  /** Cents off the order, given its lines after bulk pricing. */
   discountCents(lines: PricedLine[]): number;
 };
+
+const SAVE10_RATE = 0.1;
 
 /** Live promo codes. Matching is case-insensitive. */
 export const PROMOTIONS: Promotion[] = [
   {
     code: "SAVE10",
-    description: "Launch promo: 10% off lines without a bulk discount",
-    discountCents: (lines) =>
-      Math.round(
-        lines.reduce((sum, line) => sum + line.lineTotalCents, 0) * 0.1
-      ),
+    description: "Launch promo: 10% off the order",
+    discountCents: (lines) => {
+      const subtotal = lines.reduce(
+        (sum, line) => sum + line.lineTotalCents,
+        0
+      );
+      return Math.round(subtotal * SAVE10_RATE);
+    },
   },
 ];
 

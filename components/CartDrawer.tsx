@@ -101,15 +101,14 @@ export function CartDrawer() {
 function PromoCodeField() {
   const { promoCode, applyPromoCode, removePromoCode } = useCart();
   const [input, setInput] = useState("");
-  const [error, setError] = useState("");
+  const [isInvalid, setIsInvalid] = useState(false);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (applyPromoCode(input)) {
+    const applied = applyPromoCode(input);
+    setIsInvalid(!applied);
+    if (applied) {
       setInput("");
-      setError("");
-    } else {
-      setError("That promo code is not valid.");
     }
   }
 
@@ -133,15 +132,15 @@ function PromoCodeField() {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           autoComplete="off"
-          aria-invalid={error ? true : undefined}
+          aria-invalid={isInvalid || undefined}
         />
       </label>
       <button type="submit" className="button" disabled={input.trim() === ""}>
         Apply
       </button>
-      {error && (
+      {isInvalid && (
         <p className="promo-error" role="alert">
-          {error}
+          That promo code is not valid.
         </p>
       )}
     </form>

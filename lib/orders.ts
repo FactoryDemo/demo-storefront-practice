@@ -1,6 +1,6 @@
 import { calculateCartTotal, priceLines } from "./pricing";
-import { findPromotion } from "./promotions";
 import { PRODUCTS } from "./products";
+import { findPromotion } from "./promotions";
 import type { CartItem, PricedLine } from "./types";
 
 export type PickupSlotId = "asap" | "in-15" | "in-30" | "in-45" | "in-60";
@@ -26,7 +26,7 @@ export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
-  /** Normalized promo code, present only when the customer applied a valid one. */
+  /** Uppercase code of a live promotion, when the customer used one. */
   promoCode?: string;
 };
 
@@ -68,9 +68,7 @@ export function validateOrderRequest(input: unknown): OrderValidation {
       name: (name as string).trim(),
       pickup: pickup as PickupSlotId,
       items: mergeItems(items as CartItem[]),
-      ...(hasPromoCode(promoCode)
-        ? { promoCode: (promoCode as string).trim().toUpperCase() }
-        : {}),
+      ...promoField(promoCode),
     },
   };
 }
@@ -106,18 +104,27 @@ function validateName(name: unknown): string[] {
   return [];
 }
 
-function hasPromoCode(promoCode: unknown): boolean {
-  return typeof promoCode === "string" && promoCode.trim().length > 0;
+function isBlank(promoCode: unknown): boolean {
+  return (
+    promoCode === undefined ||
+    promoCode === null ||
+    (typeof promoCode === "string" && promoCode.trim() === "")
+  );
 }
 
 function validatePromoCode(promoCode: unknown): string[] {
-  if (promoCode === undefined || promoCode === null || promoCode === "") {
+  if (isBlank(promoCode)) {
     return [];
   }
-  if (typeof promoCode !== "string" || !findPromotion(promoCode)) {
-    return ["That promo code is not valid."];
-  }
-  return [];
+  const known = typeof promoCode === "string" && findPromotion(promoCode);
+  return known ? [] : ["That promo code is not valid."];
+}
+
+function promoField(promoCode: unknown): { promoCode?: string } {
+  const promotion = isBlank(promoCode)
+    ? null
+    : findPromotion(promoCode as string);
+  return promotion ? { promoCode: promotion.code } : {};
 }
 
 function validatePickup(pickup: unknown): string[] {
