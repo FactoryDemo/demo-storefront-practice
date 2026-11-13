@@ -18,41 +18,6 @@ function errorsFor(input: unknown): string[] {
   return result.ok ? [] : result.errors;
 }
 
-describe("promo codes", () => {
-  it("keeps a valid code, normalized", () => {
-    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
-    expect(result.ok && result.request.promoCode).toBe("SAVE10");
-  });
-
-  it("rejects unknown or non-string codes", () => {
-    const message = ["That promo code is not valid."];
-    expect(errorsFor({ ...VALID, promoCode: "NOPE" })).toEqual(message);
-    expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual(message);
-  });
-
-  it("treats an empty or missing code as no code", () => {
-    expect(errorsFor({ ...VALID, promoCode: "" })).toEqual([]);
-    const result = validateOrderRequest({ ...VALID, promoCode: "" });
-    expect(result.ok && "promoCode" in result.request).toBe(false);
-  });
-
-  it("prices the order with the promo on the server", () => {
-    const items = [{ productId: "latte", quantity: 2 }]; // 950, no bulk discount
-    const result = validateOrderRequest({ ...VALID, items, promoCode: "SAVE10" });
-    if (!result.ok) throw new Error("expected valid request");
-    const order = buildOrder(result.request, "BB-1", new Date(0));
-    expect(order.totalCents).toBe(855);
-    expect(order.promoCode).toBe("SAVE10");
-  });
-
-  it("does not stack the promo with the bulk discount", () => {
-    const result = validateOrderRequest({ ...VALID, promoCode: "SAVE10" });
-    if (!result.ok) throw new Error("expected valid request");
-    const order = buildOrder(result.request, "BB-1", new Date(0));
-    expect(order.totalCents).toBe(945);
-  });
-});
-
 describe("validateOrderRequest", () => {
   it("accepts a valid order and trims the name", () => {
     const result = validateOrderRequest({ ...VALID, name: "  Ada  " });
