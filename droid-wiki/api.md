@@ -13,7 +13,7 @@ There is no order lookup endpoint. `/orders/[id]` is a browser confirmation page
 
 ## Place an order
 
-The browser sends the pickup name, slot, items with quantities, and an optional applied `promoCode` (`components/Checkout.tsx`, `lib/orders.ts`):
+The browser sends the pickup name, slot, and items with quantities (`components/Checkout.tsx`, `lib/orders.ts`):
 
 ```json
 {
@@ -22,8 +22,7 @@ The browser sends the pickup name, slot, items with quantities, and an optional 
   "items": [
     { "productId": "drip", "quantity": 3 },
     { "productId": "espresso", "quantity": 1 }
-  ],
-  "promoCode": "SAVE10"
+  ]
 }
 ```
 
@@ -33,13 +32,12 @@ The browser sends the pickup name, slot, items with quantities, and an optional 
 - A known pickup ID: `asap`, `in-15`, `in-30`, `in-45`, or `in-60`.
 - A nonempty items array.
 - A catalog product ID and an integer quantity from 1 through 99 on each submitted item.
-- An optional live promotion code. Missing, `undefined`, `null`, or exactly `""` means no code; whitespace-only, unknown, and nonstring values produce `"That promo code is not valid."`. Valid codes are trimmed and uppercased.
 
 Validation collects errors from the fields and items. Duplicate product IDs merge after per-item validation, so the merged quantity can exceed 99. Browser cart restoration does not enforce that cap either (`lib/cart.ts`). These are current semantics, not a claim of a production-safe maximum.
 
-Unrecognized extra fields, such as a supplied price, total, or discount amount, are ignored when building the validated request; `promoCode` is a recognized, validated field. `buildOrder` in `lib/orders.ts` assumes validated input and re-prices against `lib/products.ts` using `priceLines(request.items)` and `calculateCartTotal(request.items, request.promoCode)` from `lib/pricing.ts`.
+Unrecognized extra fields, including a supplied price, total, discount amount, or `promoCode`, are ignored when building the validated request. `buildOrder` in `lib/orders.ts` assumes validated input and re-prices against `lib/products.ts` using `priceLines(request.items)` and `calculateCartTotal(request.items)` from `lib/pricing.ts`.
 
-For the example, the bulk Drip Coffee line costs 945 cents and the Espresso line costs 295 cents. Without a code the total is **1,240 cents**; `SAVE10` discounts only the eligible Espresso subtotal by 30 cents, giving **1,210 cents**. The line amounts stay unchanged (`lib/pricing.ts`, `lib/promotions.ts`, `tests/pricing.test.ts`). See [cart pricing](features/cart-pricing.md) for bulk pricing and promotion eligibility.
+For the example, the bulk Drip Coffee line costs 945 cents and the Espresso line costs 295 cents, totaling **1,240 cents** (`lib/pricing.ts`, `tests/orders.test.ts`). No promo code changes this response: the registry is empty and the order flow does not pass a code to pricing (`lib/promotions.ts`, `lib/orders.ts`). See [cart pricing](features/cart-pricing.md).
 
 An illustrative 201 response:
 
@@ -52,13 +50,12 @@ An illustrative 201 response:
     { "productId": "drip", "quantity": 3, "lineTotalCents": 945 },
     { "productId": "espresso", "quantity": 1, "lineTotalCents": 295 }
   ],
-  "totalCents": 1210,
-  "promoCode": "SAVE10",
-  "placedAt": "2026-11-12T12:00:00.000Z"
+  "totalCents": 1240,
+  "placedAt": "2026-11-13T15:07:27.000Z"
 }
 ```
 
-The response has `id`, `name`, `pickup`, `lines`, `totalCents`, `placedAt`, and an optional `promoCode`. Lines contain post-bulk, pre-promotion amounts, so their sum can exceed `totalCents`; there is no explicit discount-amount or breakdown field (`lib/orders.ts`). `SAVE10` takes 10% off the combined eligible subtotal, rounded once; lines with quantity at least three are excluded before the promotion callback. Unknown codes are ignored by the pure pricing helper, but rejected by request validation (`lib/pricing.ts`, `lib/promotions.ts`).
+The response has `id`, `name`, `pickup`, `lines`, `totalCents`, and `placedAt`. Line amounts already include any bulk discount, and their sum equals `totalCents`. There is no promo code or discount-breakdown field (`lib/orders.ts`). The optional promotion argument remains only in the pure helper, not this API contract (`lib/pricing.ts`).
 
 The actual route creates `BB-` plus six uppercase UUID characters and the current timestamp (`app/api/orders/route.ts`). It does not store the result or guarantee global ID uniqueness.
 
@@ -82,10 +79,10 @@ Requests are unauthenticated mock actions. There is no idempotency key or durabl
 | `app/api/health/route.ts` | Health response, uptime log, and health counter |
 | `lib/orders.ts` | Request/result types, validation, merging, pricing |
 | `lib/pricing.ts` | Catalog-based line pricing and cart totals |
-| `lib/promotions.ts` | Live SAVE10 registry, normalized lookup, and eligible-subtotal discount |
+| `lib/promotions.ts` | Empty promotion registry and dormant normalized lookup |
 | `server/telemetry.ts` | Wrapper, generic failure response, metrics, flush |
-| `tests/orders.test.ts` | Validation, duplicate merging, no-code totals, promo normalization, server repricing, and non-stacking |
-| `tests/pricing.test.ts` | SAVE10 rounding, mixed/bulk-only eligibility, and unknown-code fallback |
+| `tests/orders.test.ts` | Validation, duplicate merging, catalog repricing, and pickup labels |
+| `tests/pricing.test.ts` | Bulk thresholds, mixed/empty carts, and unknown-code fallback |
 | `e2e/storefront.spec.ts` | API success with a 945-cent total, invalid-order rejection, and health response |
 
 See [pickup checkout](features/checkout.md) for browser handling and [data models](reference/data-models.md) for types.

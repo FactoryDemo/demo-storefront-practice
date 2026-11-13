@@ -6,7 +6,7 @@ Bean & Byte is a demo coffee storefront for practicing software changes. It has 
 
 Customers browse 13 products in four categories, add quantities, and place a pickup order. Buying three or more of one product discounts that line by 10%. Three Drip Coffees cost $9.45; adding an Espresso brings the total to $12.40 (`lib/products.ts`, `lib/pricing.ts`, `tests/orders.test.ts`).
 
-The cart accepts SAVE10, matched case-insensitively after trimming. It takes 10% off the combined subtotal of lines below the bulk threshold, without stacking on bulk-priced lines. Three Drip Coffees plus one Espresso cost $12.10 with SAVE10, versus $12.40 without it (`lib/promotions.ts`, `lib/pricing.ts`, `tests/pricing.test.ts`). The selected code persists in the browser and is validated again at checkout (`components/CartProvider.tsx`, `lib/orders.ts`). [Lore](../lore.md) records the earlier promotion rehearsals and reversions.
+There are no active promo codes: `PROMOTIONS` in `lib/promotions.ts` is empty. The cart and checkout have no promo field or state, and the order contract accepts only name, pickup, and items (`components/CartProvider.tsx`, `components/CartDrawer.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). The optional pure pricing hook remains dormant. [Lore](../lore.md) records the SAVE10 rehearsals and reversions, including the latest November 13 reversion.
 
 Orders are pretend. There is no payment processor, account system, database, or server-side order history. The confirmation reads the most recent order saved in the same browser tab (`app/api/orders/route.ts`, `components/lastOrder.ts`, `components/OrderConfirmation.tsx`).
 

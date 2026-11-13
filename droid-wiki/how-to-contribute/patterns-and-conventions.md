@@ -10,9 +10,9 @@ Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the projec
 
 Add pricing rules in `lib/pricing.ts`, then use them from the UI and `lib/orders.ts`. Do not duplicate arithmetic in a component or trust totals in an HTTP request. Currency values remain integer cents; `lib/currency.ts` handles display. The current bulk calculation uses a fractional rate and rounds the resulting line to a whole cent.
 
-`lib/promotions.ts` registers SAVE10. The shared dispatcher in `lib/pricing.ts` excludes lines at or above the bulk threshold before invoking any promotion callback. SAVE10 rounds 10% of the combined eligible subtotal once; the dispatcher subtracts the discount and clamps the final total at zero. Preserve that non-stacking boundary when adding codes.
+`PROMOTIONS` in `lib/promotions.ts` is empty. The optional promotion hook in `lib/pricing.ts` would pass all post-bulk lines to the callback, subtract its discount, and clamp the final total at zero. There is no current non-stacking filter or live discount callback. Adding a code requires explicit eligibility and rounding rules; do not infer them from historical SAVE10 documentation.
 
-The cart provider owns optional promo state and persistence, the drawer owns its input, and checkout sends the selected code for independent validation and repricing (`components/CartProvider.tsx`, `components/CartDrawer.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). Unknown codes are ignored by the pure total helper but rejected by order validation. Keep those different caller contracts explicit. Existing promotion assertions live in `tests/pricing.test.ts` and `tests/orders.test.ts`; add browser coverage in `e2e/storefront.spec.ts` when changing promo interactions.
+The cart provider owns item state and persistence; the drawer and checkout call pricing with items only (`components/CartProvider.tsx`, `components/CartDrawer.tsx`, `components/Checkout.tsx`). Unknown codes leave the pure total unchanged. `lib/orders.ts` has no promo field: extra request fields, including `promoCode`, are ignored rather than validated. Current tests cover unknown-code fallback, bulk pricing, and server repricing (`tests/pricing.test.ts`, `tests/orders.test.ts`). Any future promotion flow needs tests for both arithmetic and browser interactions in `e2e/storefront.spec.ts`.
 
 ## Types and names
 

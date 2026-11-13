@@ -10,8 +10,8 @@ These terms connect the UI, pricing core, and operational tools. Types are defin
 | Cart line | Product ID and quantity, without a trusted price (`lib/types.ts`). |
 | Bulk threshold | Quantity three of the same product qualifies that line for 10% off (`lib/pricing.ts`). |
 | Priced line | Product ID, quantity, and computed `lineTotalCents` (`lib/types.ts`). |
-| Promotion | Discount callback receiving only lines below the bulk threshold. SAVE10 takes 10% off their combined subtotal, rounding the discount once (`lib/promotions.ts`, `lib/pricing.ts`). |
-| Promo code | Optional cart and order state, matched after trimming and uppercasing. The drawer applies/removes it, browser storage persists it, and server validation rejects unknown nonempty codes (`components/CartDrawer.tsx`, `components/CartProvider.tsx`, `lib/orders.ts`). |
+| Promotion | Dormant discount callback receiving all post-bulk priced lines. The registry is empty; the dispatcher has no bulk-line exclusion (`lib/promotions.ts`, `lib/pricing.ts`). |
+| Promo code | Optional argument to the pure total helper, matched after trimming and uppercasing. There are no active codes and no cart or order promo field (`lib/promotions.ts`, `lib/pricing.ts`, `components/CartProvider.tsx`, `lib/orders.ts`). |
 | Pickup slot | One of five fixed relative choices, not a reservation or stored fulfillment schedule (`lib/orders.ts`). |
 | Order | Server-priced response with an ID, pickup name and slot, lines, total, and timestamp (`lib/orders.ts`). |
 | Last order | Single session-storage value used by the confirmation page in the same tab (`components/lastOrder.ts`). |
