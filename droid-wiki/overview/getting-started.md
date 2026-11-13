@@ -31,7 +31,9 @@ Expect HTTP 200 and `{"status":"ok"}` from `app/api/health/route.ts`.
 
 These values come from `lib/products.ts` and `lib/pricing.ts`; the server response is covered in `tests/orders.test.ts`, and the browser scenario is in `e2e/storefront.spec.ts`. Nothing is charged.
 
-Reloading restores cart quantities, and placing an order clears the cart (`components/CartProvider.tsx`, `components/Checkout.tsx`, `e2e/storefront.spec.ts`). There is no promo field in the current cart or checkout, and `lib/promotions.ts` has no active codes. Follow the $12.40 flow above rather than the historical SAVE10 examples in [lore](../lore.md).
+Reloading restores cart quantities, and placing an order clears the cart (`components/CartProvider.tsx`, `components/Checkout.tsx`, `e2e/storefront.spec.ts`).
+
+For the optional promo flow, apply ` save10 ` in the nonempty cart drawer before checkout. It becomes SAVE10, and the mixed cart above totals $12.10: the bulk coffee line stays $9.45, while the Espresso receives a rounded 30-cent discount. Removing the code restores $12.40. The code persists across reloads and is cleared after successful checkout (`components/CartDrawer.tsx`, `components/CartProvider.tsx`, `components/Checkout.tsx`, `lib/pricing.ts`). Existing unit tests cover the promo arithmetic and server validation; the six existing browser scenarios cover the no-code journey, not promo interactions (`tests/pricing.test.ts`, `tests/orders.test.ts`, `e2e/storefront.spec.ts`).
 
 ## Required checks
 

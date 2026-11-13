@@ -3,7 +3,7 @@ Active contributors: **nicolasschmidt2001**.
 
 ## Purpose
 
-Optional PostHog integration observes the shopping journey with bulk-priced totals, reports browser exceptions, and controls one menu announcement. The storefront must remain usable without a project key or enabled flags. Pure naming/property helpers live in `lib/analytics.ts`; browser SDK loading and React flag state live in `components/posthog.ts`.
+Optional PostHog integration observes the shopping journey, reports browser exceptions, and controls one menu announcement. Cart events retain bulk-only totals, while placed-order events use the final server total, including any promo discount. The storefront must remain usable without a project key or enabled flags. Pure naming/property helpers live in `lib/analytics.ts`; browser SDK loading and React flag state live in `components/posthog.ts`.
 
 ## Event and property contract
 
@@ -17,7 +17,9 @@ Optional PostHog integration observes the shopping journey with bulk-priced tota
 | `order_placed` | `components/Checkout.tsx` | `orderId`, pickup, line/item counts, authoritative server `totalCents`. |
 | `order_failed` | `components/Checkout.tsx` | `errorCount`, not raw submitted input or customer name. |
 
-`cartProperties(items)` in `lib/analytics.ts` calls `calculateCartTotal(items)` in `lib/pricing.ts`, using the same bulk pricing as the UI. Both `cart_opened` and `checkout_started` pass items only. Three Drip Coffees plus one Espresso report **1240 cents**. The promotion registry is empty; no promo state, text, property, or event is sent. `orderProperties` in `lib/analytics.ts` uses the server's final `totalCents` for `order_placed`. Server merging of duplicate lines can still change a malformed stored cart's total, and a checkout-start event is only a snapshot, not a guarantee of the eventual submitted cart. Later cart changes do not emit it again within the same mount. See [cart and pricing](cart-pricing.md), [checkout](checkout.md), the [API contract](../api.md), and [data models](../reference/data-models.md).
+`cartProperties(items)` in `lib/analytics.ts` still calls `calculateCartTotal(items)` in `lib/pricing.ts` **without a promo code**. Both `cart_opened` and `checkout_started` pass items only, despite the UI now using cart promo state. Three Drip Coffees plus one Espresso therefore report **1240 cents**, even when SAVE10 makes the displayed and submitted total **1210 cents**. This overstatement occurs when the applied code produces a discount; an all-bulk cart is unchanged. No promo text, property, or promo-specific event is transmitted by these custom events. `orderProperties` in `lib/analytics.ts` uses the server's final `totalCents` for `order_placed`, so it includes the discount without sending `promoCode`.
+
+Server merging of duplicate lines can also change a malformed stored cart's total, and a checkout-start event is only a snapshot, not a guarantee of the eventual submitted cart. Later cart or promo changes do not emit it again within the same mount. See [cart and pricing](cart-pricing.md), [checkout](checkout.md), the [API contract](../api.md), and [data models](../reference/data-models.md).
 
 `releaseProperties` in `lib/analytics.ts` adds `appRepo`, `appVersion` (first seven commit characters), and `appEnvironment`. Browser initialization reads public Vercel repository/SHA/environment variables; missing values become `local`, `dev`, and `development`. `server/release.ts` uses the same helper with server Vercel variables for server exceptions.
 
@@ -45,7 +47,7 @@ graph LR
 
 ## Privacy, tests, and modification entrypoints
 
-Never put the customer's name or other personal data into custom properties. `orderProperties` deliberately omits the name; `tests/analytics.test.ts` checks this alongside event/flag names, release fallbacks, product details, and cart totals including the exact bulk-priced summary `{ lineCount: 2, itemCount: 4, totalCents: 1240 }`. These are pure Node tests, not SDK delivery, subscription-lifecycle, or browser privacy tests. Disabled session recording is not a blanket guarantee that every automatically captured signal is free of sensitive data. See [testing](../how-to-contribute/testing.md) for suite boundaries and the [glossary](../overview/glossary.md) for release properties.
+Never put the customer's name or other personal data into custom properties. `orderProperties` deliberately omits the name; `tests/analytics.test.ts` checks this alongside event/flag names, release fallbacks, product details, and cart totals including the exact bulk-priced summary `{ lineCount: 2, itemCount: 4, totalCents: 1240 }`. The unchanged tests do not assert promo-priced order properties or the cart/final-total mismatch. These are pure Node tests, not SDK delivery, subscription-lifecycle, or browser privacy tests. Disabled session recording is not a blanket guarantee that every automatically captured signal is free of sensitive data. See [testing](../how-to-contribute/testing.md) for suite boundaries and the [glossary](../overview/glossary.md) for release properties.
 
 Add event/flag keys and pure property builders in `lib/analytics.ts`, invoke `track` at the interaction boundary, and test property shape and PII exclusion. Keep each new flag's disabled path functional. Route errors through the existing exception wrappers rather than adding SDK initialization to `lib/`. Server log redaction matches sensitive keys and does not automatically scrub customer names in arbitrary text; see [security boundaries](../security.md) and [logging](../how-to-monitor/logging.md).
 

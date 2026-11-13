@@ -14,9 +14,9 @@ Vitest uses the Node environment and includes `tests/**/*.test.ts`. The seven un
 
 | Test file | What it exercises |
 | --- | --- |
-| `tests/pricing.test.ts` | Bulk boundary at quantities 2/3, a larger quantity of 5, nonpositive quantities, mixed/empty carts, unknown products/codes, currency display |
+| `tests/pricing.test.ts` | Bulk boundary at quantities 2/3, a larger quantity of 5, nonpositive quantities, mixed/empty carts, unknown products/codes, SAVE10 normalization and non-stacking, currency display |
 | `tests/cart.test.ts` | Adding, incrementing, removing, counts, malformed saved data |
-| `tests/orders.test.ts` | Names and length boundary, pickup slots, item validation, collected errors, duplicate merging, exact server-priced mixed order, pickup labels |
+| `tests/orders.test.ts` | Names and length boundary, pickup slots, item validation, collected errors, duplicate merging, optional promo normalization/rejection, server promo repricing and non-stacking, pickup labels |
 | `tests/products.test.ts` | Catalog structure and lookup behavior |
 | `tests/analytics.test.ts` | Event/flag names, release tags, product properties, bulk-priced cart total of 1,240 cents, order properties without the name |
 | `tests/logger.test.ts` | Structured output, levels, key-based redaction, serialization |
@@ -58,10 +58,10 @@ The helper waits for hydration before clicking.
 
 The checkout scenario pins three Drip Coffees to $9.45, plus one Espresso to $12.40. It verifies the same confirmation total and empty cart. See [cart pricing](../features/cart-pricing.md) and [API](../api.md).
 
-Promo scenarios and forged-total assertions were removed. The current suite does not assert promo UI, code normalization/rejection, or a forged client total. Source inspection establishes that unknown fields, including any `promoCode` value, are ignored (`lib/orders.ts`); do not describe that as current test coverage. Public tests do not reveal the private Finance archive or establish its scope.
+The browser suite has no promo interactions or forged-total assertions. The unit suite does cover code normalization/rejection and non-stacking in `tests/pricing.test.ts` and `tests/orders.test.ts`: two Lattes cost 855 cents with SAVE10, three Drip Coffees remain 945 cents, and a mixed coffee/Espresso cart totals 1,210 cents. `lib/orders.ts` validates `promoCode`, while unrelated extra fields such as client totals remain ignored. Public tests do not reveal the private Finance archive or establish its scope.
 
 ## Manual QA and gaps
 
 `.factory/skills/storefront-qa/SKILL.md` adds a useful threshold transition: reduce Drip Coffee from three to two, see $7.00 for that line and $9.95 with Espresso, then restore three. It also checks server log privacy and health.
 
-`tests/pricing.test.ts` has no dedicated half-cent, quantity-99, or promotion non-stacking tests. Existing tests do not directly mount React components or exhaust every storage failure, duplicate-request, and concurrent-interaction state. Add focused coverage when changing those paths. Do not treat this guide as a claim that all optional remote integrations were exercised.
+`tests/pricing.test.ts` checks a half-cent promo discount through the mixed cart: 10% of the eligible 295-cent Espresso subtotal rounds to 30 cents. It has no dedicated bulk half-cent or quantity-99 assertion. Existing tests do not directly mount React components or cover promo apply/remove/reload/checkout interactions, every storage failure, duplicate requests, or concurrent interactions. Add focused coverage when changing those paths. Do not treat this guide as a claim that all optional remote integrations were exercised.

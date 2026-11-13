@@ -18,6 +18,10 @@ The current dependency policy targets Node 20. `.github/dependabot.yml` blocks k
 
 `components/CartProvider.tsx` reads `bean-and-byte:cart` from localStorage after mount and exposes `isLoaded`. An early empty render is not proof the saved cart was lost. `lib/cart.ts` drops malformed entries and retired products.
 
+The provider also restores `bean-and-byte:promo` only when `findPromotion` in `lib/promotions.ts` recognizes the saved code. The drawer in `components/CartDrawer.tsx` exposes Apply and Remove only for a nonempty cart. SAVE10 does not discount bulk-priced lines; a bulk-only cart can show an applied code without a lower total (`lib/pricing.ts`). Invalid nonempty codes cause order validation errors, including whitespace-only strings; missing, null, and exactly empty strings mean no code (`lib/orders.ts`).
+
+If a promo total differs from the sum of visible lines, inspect `Order.totalCents`: `components/OrderLines.tsx` displays pre-promo lines and the final total without a discount row. Cart-open and checkout-start analytics omit the code, while order-placed uses the server total (`lib/analytics.ts`). See [cart pricing](../features/cart-pricing.md) and [analytics](../features/analytics.md) before treating either difference as a new regression.
+
 The order confirmation is not a server lookup. `components/lastOrder.ts` stores one order under `bean-and-byte:last-order` in sessionStorage. `components/OrderConfirmation.tsx` requires that stored ID to match the URL. A different tab, unavailable storage, or a later order can produce “Order not found” even after a successful response.
 
 Inspect storage locally without copying pickup names into logs, tickets, or analytics. The [checkout guide](../features/checkout.md) explains the lifecycle.
