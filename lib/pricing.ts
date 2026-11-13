@@ -58,9 +58,10 @@ export type CartPricing = {
 
 /**
  * Price a whole cart. Bulk discounts apply per line; a mixed cart can have
- * discounted and undiscounted lines side by side. The promo discount is taken
- * from the subtotal after bulk pricing. Unknown promo codes are ignored, and
- * the total never goes below zero.
+ * discounted and undiscounted lines side by side. Promo codes never stack
+ * with the bulk discount (FIN-212), so a promo only sees lines that are below
+ * the bulk threshold. Unknown promo codes are ignored, and the total never
+ * goes below zero.
  */
 export function priceCart(items: CartItem[], promoCode?: string): CartPricing {
   const lines = priceLines(items);
@@ -78,9 +79,12 @@ export function priceCart(items: CartItem[], promoCode?: string): CartPricing {
       totalCents: subtotalCents,
     };
   }
+  const promoEligibleLines = lines.filter(
+    (line) => line.quantity < BULK_DISCOUNT_THRESHOLD
+  );
   const discountCents = Math.min(
     subtotalCents,
-    promotion.discountCents(lines)
+    promotion.discountCents(promoEligibleLines)
   );
   return {
     lines,

@@ -70,10 +70,10 @@ describe("calculateCartTotal", () => {
 });
 
 describe("priceCart with a promo code", () => {
-  it("takes 10% off the whole order after bulk pricing", () => {
+  it("takes 10% off only the lines below the bulk threshold (FIN-212)", () => {
     const items: CartItem[] = [
-      { productId: "drip", quantity: 3 }, // bulk: 945
-      { productId: "espresso", quantity: 1 }, // 295
+      { productId: "drip", quantity: 3 }, // bulk: 945, no promo
+      { productId: "espresso", quantity: 1 }, // 295, 10% off is 30
     ];
     expect(priceCart(items, "SAVE10")).toEqual({
       lines: [
@@ -82,8 +82,26 @@ describe("priceCart with a promo code", () => {
       ],
       subtotalCents: 1240,
       promoCode: "SAVE10",
-      discountCents: 124,
-      totalCents: 1116,
+      discountCents: 30,
+      totalCents: 1210,
+    });
+  });
+
+  it("never stacks the promo on a bulk-priced line (FIN-212)", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 3 }]; // bulk: 797
+    expect(calculateCartTotal(items, "SAVE10")).toBe(797);
+    expect(priceCart(items, "SAVE10")).toMatchObject({
+      promoCode: "SAVE10",
+      discountCents: 0,
+      totalCents: 797,
+    });
+  });
+
+  it("treats a line of exactly two as below the bulk threshold", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 2 }]; // 590
+    expect(priceCart(items, "SAVE10")).toMatchObject({
+      discountCents: 59,
+      totalCents: 531,
     });
   });
 

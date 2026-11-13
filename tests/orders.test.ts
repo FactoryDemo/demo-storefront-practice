@@ -135,8 +135,8 @@ describe("buildOrder", () => {
         name: "Ada",
         pickup: "in-15",
         items: [
-          { productId: "drip", quantity: 3 }, // bulk: 945
-          { productId: "espresso", quantity: 1 }, // 295
+          { productId: "drip", quantity: 3 }, // bulk: 945, no promo
+          { productId: "espresso", quantity: 1 }, // 295, 10% off is 30
         ],
         promoCode: "SAVE10",
       },
@@ -146,8 +146,8 @@ describe("buildOrder", () => {
     expect(order).toMatchObject({
       subtotalCents: 1240,
       promoCode: "SAVE10",
-      discountCents: 124,
-      totalCents: 1116,
+      discountCents: 30,
+      totalCents: 1210,
     });
   });
 });
@@ -190,11 +190,13 @@ describe("promo codes at checkout", () => {
       return;
     }
     const order = buildOrder(result.request, "BB-TEST03", new Date(0));
-    // Three Drip Coffees are 945 cents after bulk pricing; 10% of that is 95.
+    // Three Drip Coffees are 945 cents after bulk pricing. Bulk-priced lines
+    // never take SAVE10 (FIN-212), so the client's discount is ignored and
+    // nothing comes off.
     expect(order).toMatchObject({
       subtotalCents: 945,
-      discountCents: 95,
-      totalCents: 850,
+      discountCents: 0,
+      totalCents: 945,
     });
   });
 });
