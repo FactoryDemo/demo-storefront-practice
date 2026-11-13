@@ -1,4 +1,5 @@
 import { calculateCartTotal, priceLines } from "./pricing";
+import { findPromotion } from "./promotions";
 import { PRODUCTS } from "./products";
 import type { CartItem, PricedLine } from "./types";
 
@@ -25,6 +26,8 @@ export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
+  /** Normalized promo code, present only when the customer applied a valid one. */
+  promoCode?: string;
 };
 
 /** A placed order. Totals are computed on the server from the catalog. */
@@ -34,6 +37,7 @@ export type Order = {
   pickup: PickupSlotId;
   lines: PricedLine[];
   totalCents: number;
+  promoCode?: string;
   placedAt: string;
 };
 
@@ -48,11 +52,12 @@ export function validateOrderRequest(input: unknown): OrderValidation {
   if (typeof input !== "object" || input === null) {
     return { ok: false, errors: ["Order must be a JSON object."] };
   }
-  const { name, pickup, items } = input as Record<string, unknown>;
+  const { name, pickup, items, promoCode } = input as Record<string, unknown>;
   const errors = [
     ...validateName(name),
     ...validatePickup(pickup),
     ...validateItems(items),
+    ...validatePromoCode(promoCode),
   ];
   if (errors.length > 0) {
     return { ok: false, errors };
@@ -63,6 +68,9 @@ export function validateOrderRequest(input: unknown): OrderValidation {
       name: (name as string).trim(),
       pickup: pickup as PickupSlotId,
       items: mergeItems(items as CartItem[]),
+      ...(hasPromoCode(promoCode)
+        ? { promoCode: (promoCode as string).trim().toUpperCase() }
+        : {}),
     },
   };
 }
@@ -78,7 +86,8 @@ export function buildOrder(
     name: request.name,
     pickup: request.pickup,
     lines: priceLines(request.items),
-    totalCents: calculateCartTotal(request.items),
+    totalCents: calculateCartTotal(request.items, request.promoCode),
+    ...(request.promoCode ? { promoCode: request.promoCode } : {}),
     placedAt: placedAt.toISOString(),
   };
 }
@@ -93,6 +102,20 @@ function validateName(name: unknown): string[] {
   }
   if (name.trim().length > MAX_NAME_LENGTH) {
     return [`Name must be ${MAX_NAME_LENGTH} characters or fewer.`];
+  }
+  return [];
+}
+
+function hasPromoCode(promoCode: unknown): boolean {
+  return typeof promoCode === "string" && promoCode.trim().length > 0;
+}
+
+function validatePromoCode(promoCode: unknown): string[] {
+  if (promoCode === undefined || promoCode === null || promoCode === "") {
+    return [];
+  }
+  if (typeof promoCode !== "string" || !findPromotion(promoCode)) {
+    return ["That promo code is not valid."];
   }
   return [];
 }

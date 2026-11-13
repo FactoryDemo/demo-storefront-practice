@@ -9,7 +9,16 @@ export type Promotion = {
 };
 
 /** Live promo codes. Matching is case-insensitive. */
-export const PROMOTIONS: Promotion[] = [];
+export const PROMOTIONS: Promotion[] = [
+  {
+    code: "SAVE10",
+    description: "Launch promo: 10% off your order",
+    discountCents: (lines) =>
+      Math.round(
+        lines.reduce((sum, line) => sum + line.lineTotalCents, 0) * 0.1
+      ),
+  },
+];
 
 export function findPromotion(code: string): Promotion | null {
   const normalized = code.trim().toUpperCase();
