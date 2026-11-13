@@ -2,6 +2,10 @@
 
 Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the project rules, with strict TypeScript in `tsconfig.json` and lint enforcement in `.eslintrc.json`.
 
+## Work from current code
+
+Build each feature from its request and the current implementation. `AGENTS.md` prohibits reading, reusing, or reverting earlier attempts from Git history, including reverted commits, closed or merged PRs, and `Rehearsal-*` commits. Do not run `git show`, `git log -p`, or `git revert` on those attempts. Historical wiki descriptions are not implementation instructions.
+
 ## Keep boundaries explicit
 
 - `lib/` contains pure logic, with no React and no I/O.

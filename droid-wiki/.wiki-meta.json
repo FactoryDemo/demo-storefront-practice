@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-13T15:12:54Z",
-  "commitHash": "8a424472be94bba50c1d2458190cf3461cf30d41",
+  "generatedAt": "2026-11-13T15:58:12.003Z",
+  "commitHash": "bda6922a582a19e201c8a65c08bf80183003863f",
   "branch": "main",
   "pageCount": 31,
   "topLevelSections": [
@@ -58,7 +58,7 @@
     "status": "failed",
     "warnings": [
       "HyperFrames 0.4.44 doctor reported failed prerequisites: FFmpeg and FFprobe not found. The CLI exited 0 despite these failed checks. Rendering skipped in non-interactive mode.",
-      "No prior playable video was available: all ten remote wiki runs were inspected and none returned videoOverview or a playbackUrl."
+      "No prior playable video was available: all eleven remote wiki runs were inspected and none returned videoOverview or a playbackUrl."
     ]
   }
 }
