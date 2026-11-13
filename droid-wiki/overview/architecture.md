@@ -2,7 +2,7 @@
 
 Bean & Byte is one Next.js 14 application using React 18 and strict TypeScript. UI code calls a pure business-logic layer; API routes independently validate and price orders (`package.json`, `tsconfig.json`, `lib/orders.ts`).
 
-At the 2026-11-12 snapshot, committed application and operational source comprises 3,342 physical lines: TypeScript/TSX 1,900 (56.9%), CSS 756 (22.6%), and JavaScript 686 (20.5%). [By the numbers](../by-the-numbers.md) defines the measurement scope, excluding tests, configuration, documentation, assets, lockfiles, and generated files.
+At the 2026-11-13 snapshot, committed application and operational source comprises 3,522 physical lines: TypeScript/TSX 2,054 (58.3%), CSS 782 (22.2%), and JavaScript 686 (19.5%). [By the numbers](../by-the-numbers.md) defines the measurement scope, excluding tests, configuration, documentation, assets, lockfiles, and generated files.
 
 ## Component boundaries
 
@@ -10,9 +10,9 @@ At the 2026-11-12 snapshot, committed application and operational source compris
 graph LR
   Menu["Menu and product cards"] -->|quantity changes| Cart["CartProvider"]
   Cart -->|save and restore| Local["localStorage"]
-  Cart -->|items| Pricing["lib/pricing.ts"]
-  Cart -->|items| Checkout["Checkout form"]
-  Checkout -->|POST name, pickup, items| API["Order route"]
+  Cart -->|items and optional code| Pricing["lib/pricing.ts"]
+  Cart -->|items and optional code| Checkout["Checkout form"]
+  Checkout -->|POST name, pickup, items, optional promoCode| API["Order route"]
   API -->|validate and re-price| Orders["lib/orders.ts"]
   Orders -->|catalog prices| Pricing
   API -->|201 order| Checkout
@@ -21,7 +21,7 @@ graph LR
   API -->|logs and metrics| Telemetry["server/telemetry.ts"]
 ```
 
-`app/layout.tsx` mounts the shared `CartProvider`, header, drawer, and analytics bootstrap around every page. `components/Storefront.tsx` renders the static catalog; client product cards update quantities. `components/CartProvider.tsx` delays persistence writes until its initial storage read completes, then stores cart items under the localStorage key `bean-and-byte:cart`. It no longer reads or writes promo state.
+`app/layout.tsx` mounts the shared `CartProvider`, header, drawer, and analytics bootstrap around every page. `components/Storefront.tsx` renders the static catalog; client product cards update quantities. `components/CartProvider.tsx` delays persistence writes until its initial storage read completes, then stores cart items under localStorage key `bean-and-byte:cart` and the selected promo under `bean-and-byte:promo`. Successful checkout clears both states.
 
 | Layer | Important paths | Boundary |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ graph LR
 
 The order route calls `validateOrderRequest` and `buildOrder` in `lib/orders.ts`, never a browser-supplied total. The resulting order exists in the HTTP response and then in browser session storage, not a database. There is no order retrieval API (`app/api/orders/route.ts`, `components/lastOrder.ts`).
 
-`lib/promotions.ts` retains a `Promotion` contract and case-insensitive lookup, but `PROMOTIONS` is empty. The optional code parameter in `calculateCartTotal` in `lib/pricing.ts` therefore has no effect for any code, including SAVE10. Neither the UI nor `OrderRequest` in `lib/orders.ts` exposes a promo field; extra request properties are ignored. No active promotion eligibility or stacking rule remains. See [cart pricing](../features/cart-pricing.md), [checkout](../features/checkout.md), and the historical [lore](../lore.md).
+`lib/promotions.ts` registers SAVE10 and normalizes lookup by trimming and uppercasing. `calculateCartTotal` in `lib/pricing.ts` filters out bulk-priced lines before passing eligible lines to the promotion, subtracts its rounded discount, and clamps the total to zero. `OrderRequest` in `lib/orders.ts` accepts an optional validated code; `buildOrder` uses it for authoritative repricing and includes it in the response. Priced lines keep their pre-promo amounts, so their sum can exceed the final order total. See [cart pricing](../features/cart-pricing.md), [checkout](../features/checkout.md), and the historical [lore](../lore.md).
 
 ## Optional external services
 

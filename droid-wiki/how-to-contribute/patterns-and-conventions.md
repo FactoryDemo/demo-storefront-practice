@@ -10,9 +10,9 @@ Keep the code plain, typed, and covered by tests. `AGENTS.md` defines the projec
 
 Add pricing rules in `lib/pricing.ts`, then use them from the UI and `lib/orders.ts`. Do not duplicate arithmetic in a component or trust totals in an HTTP request. Currency values remain integer cents; `lib/currency.ts` handles display. The current bulk calculation uses a fractional rate and rounds the resulting line to a whole cent.
 
-`lib/promotions.ts` defines an empty registry. The dormant hook in `lib/pricing.ts` ignores unknown codes; a future matching callback would receive all post-bulk lines, with its discount subtracted and the total clamped at zero. The interface does not enforce eligibility, rounding, or non-stacking rules. No promotion callback is currently registered.
+`lib/promotions.ts` registers SAVE10. The shared dispatcher in `lib/pricing.ts` excludes lines at or above the bulk threshold before invoking any promotion callback. SAVE10 rounds 10% of the combined eligible subtotal once; the dispatcher subtracts the discount and clamps the final total at zero. Preserve that non-stacking boundary when adding codes.
 
-The cart, checkout, and order types have no promo field (`components/CartProvider.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). Adding a promotion would require explicit product rules, server/client integration, and corresponding coverage in `tests/pricing.test.ts`, `tests/orders.test.ts`, and `e2e/storefront.spec.ts`; populating the registry alone would not expose it to checkout.
+The cart provider owns optional promo state and persistence, the drawer owns its input, and checkout sends the selected code for independent validation and repricing (`components/CartProvider.tsx`, `components/CartDrawer.tsx`, `components/Checkout.tsx`, `lib/orders.ts`). Unknown codes are ignored by the pure total helper but rejected by order validation. Keep those different caller contracts explicit. Existing promotion assertions live in `tests/pricing.test.ts` and `tests/orders.test.ts`; add browser coverage in `e2e/storefront.spec.ts` when changing promo interactions.
 
 ## Types and names
 
