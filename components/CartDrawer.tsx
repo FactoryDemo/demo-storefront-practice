@@ -84,7 +84,7 @@ export function CartDrawer() {
               <PromoCodeField />
               {promotion && promoDiscountCents > 0 && (
                 <div className="cart-promo-discount">
-                  <span>{promotion.code} · 10% off the order</span>
+                  <span>{promotion.code} · 10% off full-price items</span>
                   <span>−{formatCurrency(promoDiscountCents)}</span>
                 </div>
               )}

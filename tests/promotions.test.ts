@@ -5,7 +5,9 @@ import type { PricedLine } from "../lib/types";
 describe("findPromotion", () => {
   it("matches SAVE10 without case or whitespace sensitivity", () => {
     expect(findPromotion(" save10 ")?.code).toBe("SAVE10");
-    expect(findPromotion("SAVE10")?.description).toBe("10% off the order");
+    expect(findPromotion("SAVE10")?.description).toBe(
+      "10% off full-price items"
+    );
   });
 
   it("returns null for an unknown or blank code", () => {

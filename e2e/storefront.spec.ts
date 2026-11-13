@@ -61,25 +61,38 @@ test("three of one item get 10% off that cart line", async ({ page }) => {
   await expect(cart.locator(".cart-total")).toContainText("$9.45");
 });
 
-test("SAVE10 takes 10% off the order at checkout", async ({ page }) => {
+test("SAVE10 takes 10% off full-price items at checkout", async ({ page }) => {
   await openStorefront(page);
   await addToCart(page, "Drip Coffee", 3);
   await addToCart(page, "Espresso");
 
   const cart = await openCart(page);
   await cart.getByLabel("Promo code").fill("save10");
-  await expect(cart.locator(".cart-promo-discount")).toContainText("$1.24");
-  // $12.40 subtotal less 10% ($1.24) is $11.16.
-  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  // The three drip coffees are bulk-priced and do not stack with SAVE10.
+  // Only the $2.95 espresso is discounted: 10% is $0.30.
+  await expect(cart.locator(".cart-promo-discount")).toContainText("$0.30");
+  // $12.40 subtotal less $0.30 is $12.10.
+  await expect(cart.locator(".cart-total")).toContainText("$12.10");
   await cart.getByRole("link", { name: "Checkout" }).click();
 
   await expect(page).toHaveURL(/\/checkout$/);
   await page.getByLabel("Name for the order").fill("Ada");
-  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+  await page.getByRole("button", { name: "Place order · $12.10" }).click();
 
   await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
-  await expect(page.locator(".order-total")).toContainText("$11.16");
-  await expect(page.locator(".order-promo-discount")).toContainText("$1.24");
+  await expect(page.locator(".order-total")).toContainText("$12.10");
+  await expect(page.locator(".order-promo-discount")).toContainText("$0.30");
+});
+
+test("SAVE10 does not stack with a bulk-only cart", async ({ page }) => {
+  await openStorefront(page);
+  await addToCart(page, "Drip Coffee", 3);
+
+  const cart = await openCart(page);
+  await cart.getByLabel("Promo code").fill("SAVE10");
+  await expect(cart.locator(".cart-promo-discount")).toHaveCount(0);
+  await expect(cart.locator(".cart-total")).toContainText("$9.45");
+  await expect(cart.getByRole("status")).toContainText("does not stack");
 });
 
 test("the cart survives a page reload", async ({ page }) => {
@@ -152,8 +165,8 @@ test("POST /api/orders recomputes totals and rejects bad orders", async ({
   });
   expect(promoted.status()).toBe(201);
   expect(await promoted.json()).toMatchObject({
-    promoCode: "SAVE10",
-    totalCents: 850,
+    promoCode: null,
+    totalCents: 945,
   });
 
   const badPromo = await request.post("/api/orders", {

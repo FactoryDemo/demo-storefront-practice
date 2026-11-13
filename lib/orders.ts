@@ -83,13 +83,17 @@ export function buildOrder(
   id: string,
   placedAt: Date
 ): Order {
+  const totalCents = calculateCartTotal(request.items, request.promoCode);
+  // Record the code only when it changed the total. A code with no
+  // full-price lines to discount (for example, an all-bulk cart) is not applied.
+  const promoApplied = totalCents < calculateCartTotal(request.items);
   return {
     id,
     name: request.name,
     pickup: request.pickup,
     lines: priceLines(request.items),
-    promoCode: request.promoCode ?? null,
-    totalCents: calculateCartTotal(request.items, request.promoCode),
+    promoCode: promoApplied ? (request.promoCode ?? null) : null,
+    totalCents,
     placedAt: placedAt.toISOString(),
   };
 }

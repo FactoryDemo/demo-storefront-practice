@@ -35,7 +35,7 @@ export function OrderLines({ lines, totalCents, promoCode }: OrderLinesProps) {
       </ul>
       {promoCode && promoDiscountCents > 0 && (
         <div className="order-promo-discount">
-          <span>{promoCode} · 10% off the order</span>
+          <span>{promoCode} · 10% off full-price items</span>
           <span>−{formatCurrency(promoDiscountCents)}</span>
         </div>
       )}

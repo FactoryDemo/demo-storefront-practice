@@ -148,14 +148,14 @@ describe("buildOrder", () => {
     });
   });
 
-  it("applies the promo code to the total and records it", () => {
+  it("applies the promo code to full-price lines and records it", () => {
     const order = buildOrder(
       {
         name: "Ada",
         pickup: "in-15",
         items: [
-          { productId: "drip", quantity: 3 }, // bulk: 945
-          { productId: "espresso", quantity: 1 }, // 295
+          { productId: "drip", quantity: 3 }, // bulk: 945, no promo
+          { productId: "espresso", quantity: 1 }, // 295, 30 off
         ],
         promoCode: "SAVE10",
       },
@@ -163,8 +163,23 @@ describe("buildOrder", () => {
       new Date("2026-01-02T03:04:05.000Z")
     );
     expect(order.promoCode).toBe("SAVE10");
-    expect(order.totalCents).toBe(1116); // 1240 less 124
+    expect(order.totalCents).toBe(1210); // 1240 less 30
     expect(order.lines.map((line) => line.lineTotalCents)).toEqual([945, 295]);
+  });
+
+  it("does not record a promo code that discounted nothing", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "in-15",
+        items: [{ productId: "drip", quantity: 3 }], // bulk only
+        promoCode: "SAVE10",
+      },
+      "BB-TEST03",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.promoCode).toBeNull();
+    expect(order.totalCents).toBe(945);
   });
 });
 

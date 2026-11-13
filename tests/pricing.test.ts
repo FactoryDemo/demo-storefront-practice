@@ -77,19 +77,30 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal(items, " save10 ")).toBe(265);
   });
 
-  it("applies SAVE10 after bulk pricing", () => {
+  it("does not stack SAVE10 on a bulk-priced line (FIN-212)", () => {
     const items: CartItem[] = [{ productId: "drip", quantity: 3 }]; // bulk: 945
-    // 10% of 945 is 94.5, which rounds up to 95 cents off.
-    expect(calculateCartTotal(items, "SAVE10")).toBe(850);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(945);
   });
 
-  it("applies SAVE10 across discounted and undiscounted lines", () => {
+  it("does not stack SAVE10 on bulk-priced espressos (FIN-212)", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 3 }]; // bulk: 797
+    expect(calculateCartTotal(items, "SAVE10")).toBe(calculateCartTotal(items));
+  });
+
+  it("applies SAVE10 only to full-price lines in a mixed cart", () => {
     const items: CartItem[] = [
-      { productId: "drip", quantity: 3 }, // bulk: 945
-      { productId: "cold-brew", quantity: 1 }, // regular: 425
+      { productId: "drip", quantity: 3 }, // bulk: 945, no promo
+      { productId: "cold-brew", quantity: 1 }, // regular: 425, 10% is 42.5 -> 43
     ];
-    // Subtotal 1370, so 137 cents off.
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1233);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1327);
+  });
+
+  it("applies SAVE10 to the full-price line in a 1-espresso plus 3-drip cart", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945, no promo
+      { productId: "espresso", quantity: 1 }, // regular: 295, 10% is 29.5 -> 30
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
   });
 
   it("returns 0 for an empty cart with SAVE10", () => {
