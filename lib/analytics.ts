@@ -56,11 +56,14 @@ export function productAddedProperties(
   };
 }
 
-export function cartProperties(items: CartItem[]): AnalyticsProperties {
+export function cartProperties(
+  items: CartItem[],
+  promoCode: string | null = null
+): AnalyticsProperties {
   return {
     lineCount: items.length,
     itemCount: countItems(items),
-    totalCents: calculateCartTotal(items),
+    totalCents: calculateCartTotal(items, promoCode ?? undefined),
   };
 }
 

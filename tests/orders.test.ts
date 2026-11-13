@@ -121,8 +121,80 @@ describe("buildOrder", () => {
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },
       ],
+      subtotalCents: 1240,
+      promoCode: null,
+      discountCents: 0,
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
+    });
+  });
+
+  it("applies a recognized promo code to the server-side total", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "in-15",
+        items: [
+          { productId: "drip", quantity: 3 }, // bulk: 945
+          { productId: "espresso", quantity: 1 }, // 295
+        ],
+        promoCode: "SAVE10",
+      },
+      "BB-TEST02",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order).toMatchObject({
+      subtotalCents: 1240,
+      promoCode: "SAVE10",
+      discountCents: 124,
+      totalCents: 1116,
+    });
+  });
+});
+
+describe("promo codes at checkout", () => {
+  it("accepts a recognized code and normalizes it", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result.ok && result.request.promoCode).toBe("SAVE10");
+  });
+
+  it("rejects an unrecognized code", () => {
+    expect(errorsFor({ ...VALID, promoCode: "FREE" })).toEqual([
+      "Promo code is not recognized.",
+    ]);
+  });
+
+  it("rejects a code that is not text", () => {
+    expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual([
+      "Promo code must be text.",
+    ]);
+  });
+
+  it("treats a blank or missing code as no code", () => {
+    for (const promoCode of [undefined, null, "", "   "]) {
+      const result = validateOrderRequest({ ...VALID, promoCode });
+      expect(result.ok).toBe(true);
+      expect(result.ok && "promoCode" in result.request).toBe(false);
+    }
+  });
+
+  it("ignores client-sent totals and discounts, pricing from the catalog", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      promoCode: "SAVE10",
+      totalCents: 1,
+      discountCents: 999,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    const order = buildOrder(result.request, "BB-TEST03", new Date(0));
+    // Three Drip Coffees are 945 cents after bulk pricing; 10% of that is 95.
+    expect(order).toMatchObject({
+      subtotalCents: 945,
+      discountCents: 95,
+      totalCents: 850,
     });
   });
 });

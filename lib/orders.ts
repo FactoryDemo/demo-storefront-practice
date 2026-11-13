@@ -1,5 +1,6 @@
-import { calculateCartTotal, priceLines } from "./pricing";
+import { priceCart } from "./pricing";
 import { PRODUCTS } from "./products";
+import { findPromotion, normalizePromoCode } from "./promotions";
 import type { CartItem, PricedLine } from "./types";
 
 export type PickupSlotId = "asap" | "in-15" | "in-30" | "in-45" | "in-60";
@@ -20,11 +21,13 @@ export const PICKUP_SLOTS: PickupSlot[] = [
 export const MAX_NAME_LENGTH = 60;
 export const MAX_LINE_QUANTITY = 99;
 
-/** A validated checkout request: who is picking up, when, and what. */
+/** A validated checkout request: who is picking up, when, what, and any promo. */
 export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
+  /** Normalized promo code, present only when the customer applied one. */
+  promoCode?: string;
 };
 
 /** A placed order. Totals are computed on the server from the catalog. */
@@ -33,6 +36,9 @@ export type Order = {
   name: string;
   pickup: PickupSlotId;
   lines: PricedLine[];
+  subtotalCents: number;
+  promoCode: string | null;
+  discountCents: number;
   totalCents: number;
   placedAt: string;
 };
@@ -42,29 +48,33 @@ export type OrderValidation =
 
 /**
  * Check an untrusted checkout payload. Quantities for the same product are
- * merged, so the order has one line per product.
+ * merged, so the order has one line per product. A promo code is optional;
+ * when present it must be a recognized code.
  */
 export function validateOrderRequest(input: unknown): OrderValidation {
   if (typeof input !== "object" || input === null) {
     return { ok: false, errors: ["Order must be a JSON object."] };
   }
-  const { name, pickup, items } = input as Record<string, unknown>;
+  const { name, pickup, items, promoCode } = input as Record<string, unknown>;
   const errors = [
     ...validateName(name),
     ...validatePickup(pickup),
     ...validateItems(items),
+    ...validatePromoCode(promoCode),
   ];
   if (errors.length > 0) {
     return { ok: false, errors };
   }
-  return {
-    ok: true,
-    request: {
-      name: (name as string).trim(),
-      pickup: pickup as PickupSlotId,
-      items: mergeItems(items as CartItem[]),
-    },
+  const request: OrderRequest = {
+    name: (name as string).trim(),
+    pickup: pickup as PickupSlotId,
+    items: mergeItems(items as CartItem[]),
   };
+  const code = normalizeOptionalPromoCode(promoCode);
+  if (code) {
+    request.promoCode = code;
+  }
+  return { ok: true, request };
 }
 
 /** Price a validated request into an order. */
@@ -73,12 +83,16 @@ export function buildOrder(
   id: string,
   placedAt: Date
 ): Order {
+  const pricing = priceCart(request.items, request.promoCode);
   return {
     id,
     name: request.name,
     pickup: request.pickup,
-    lines: priceLines(request.items),
-    totalCents: calculateCartTotal(request.items),
+    lines: pricing.lines,
+    subtotalCents: pricing.subtotalCents,
+    promoCode: pricing.promoCode,
+    discountCents: pricing.discountCents,
+    totalCents: pricing.totalCents,
     placedAt: placedAt.toISOString(),
   };
 }
@@ -100,6 +114,27 @@ function validateName(name: unknown): string[] {
 function validatePickup(pickup: unknown): string[] {
   const known = PICKUP_SLOTS.some((slot) => slot.id === pickup);
   return known ? [] : ["Choose a pickup time."];
+}
+
+/** Blank or missing means no code. Anything else must be a known code. */
+function validatePromoCode(promoCode: unknown): string[] {
+  if (promoCode === undefined || promoCode === null) {
+    return [];
+  }
+  if (typeof promoCode !== "string") {
+    return ["Promo code must be text."];
+  }
+  if (promoCode.trim().length === 0) {
+    return [];
+  }
+  return findPromotion(promoCode) ? [] : ["Promo code is not recognized."];
+}
+
+function normalizeOptionalPromoCode(promoCode: unknown): string | undefined {
+  if (typeof promoCode !== "string" || promoCode.trim().length === 0) {
+    return undefined;
+  }
+  return normalizePromoCode(promoCode);
 }
 
 function validateItems(items: unknown): string[] {

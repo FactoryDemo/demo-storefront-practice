@@ -45,20 +45,55 @@ export function priceLines(items: CartItem[]): PricedLine[] {
   return lines;
 }
 
+/** A priced cart: bulk-priced lines, the promo discount, and the total. */
+export type CartPricing = {
+  lines: PricedLine[];
+  /** Sum of the line totals, after bulk pricing and before the promo. */
+  subtotalCents: number;
+  /** Normalized code that was applied, or null if none was recognized. */
+  promoCode: string | null;
+  discountCents: number;
+  totalCents: number;
+};
+
 /**
- * Total for a whole cart, in cents: the sum of all line totals, less any
- * promo code discount. Bulk discounts apply per line; a mixed cart can have
- * discounted and undiscounted lines side by side. Unknown promo codes are
- * ignored, and the total never goes below zero.
+ * Price a whole cart. Bulk discounts apply per line; a mixed cart can have
+ * discounted and undiscounted lines side by side. The promo discount is taken
+ * from the subtotal after bulk pricing. Unknown promo codes are ignored, and
+ * the total never goes below zero.
  */
-export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
+export function priceCart(items: CartItem[], promoCode?: string): CartPricing {
   const lines = priceLines(items);
-  const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  const subtotalCents = lines.reduce(
+    (sum, line) => sum + line.lineTotalCents,
+    0
+  );
   const promotion = promoCode ? findPromotion(promoCode) : null;
   if (!promotion) {
-    return subtotal;
+    return {
+      lines,
+      subtotalCents,
+      promoCode: null,
+      discountCents: 0,
+      totalCents: subtotalCents,
+    };
   }
-  return Math.max(0, subtotal - promotion.discountCents(lines));
+  const discountCents = Math.min(
+    subtotalCents,
+    promotion.discountCents(lines)
+  );
+  return {
+    lines,
+    subtotalCents,
+    promoCode: promotion.code,
+    discountCents,
+    totalCents: subtotalCents - discountCents,
+  };
+}
+
+/** Total for a whole cart, in cents. See `priceCart`. */
+export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
+  return priceCart(items, promoCode).totalCents;
 }
 
 function safeLookup(id: string): Product | null {

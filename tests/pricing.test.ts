@@ -4,6 +4,7 @@ import {
   calculateCartTotal,
   calculateLineTotal,
   BULK_DISCOUNT_THRESHOLD,
+  priceCart,
 } from "../lib/pricing";
 import { formatCurrency } from "../lib/currency";
 import type { CartItem } from "../lib/types";
@@ -65,6 +66,68 @@ describe("calculateCartTotal", () => {
   it("ignores unknown promo codes", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
+  });
+});
+
+describe("priceCart with a promo code", () => {
+  it("takes 10% off the whole order after bulk pricing", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // 295
+    ];
+    expect(priceCart(items, "SAVE10")).toEqual({
+      lines: [
+        { productId: "drip", quantity: 3, lineTotalCents: 945 },
+        { productId: "espresso", quantity: 1, lineTotalCents: 295 },
+      ],
+      subtotalCents: 1240,
+      promoCode: "SAVE10",
+      discountCents: 124,
+      totalCents: 1116,
+    });
+  });
+
+  it("applies the code regardless of case and surrounding spaces", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
+    expect(calculateCartTotal(items, " save10 ")).toBe(855);
+  });
+
+  it("reports no discount for an unknown code", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }];
+    expect(priceCart(items, "NOT-A-CODE")).toEqual({
+      lines: [{ productId: "latte", quantity: 2, lineTotalCents: 950 }],
+      subtotalCents: 950,
+      promoCode: null,
+      discountCents: 0,
+      totalCents: 950,
+    });
+  });
+
+  it("reports no discount when no code is given", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }];
+    expect(priceCart(items).discountCents).toBe(0);
+    expect(priceCart(items, undefined).promoCode).toBeNull();
+  });
+
+  it("gives nothing off an empty cart", () => {
+    expect(priceCart([], "SAVE10")).toMatchObject({
+      subtotalCents: 0,
+      discountCents: 0,
+      totalCents: 0,
+      promoCode: "SAVE10",
+    });
+  });
+
+  it("rounds the discount half up to the nearest cent", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 1 }]; // 295
+    expect(priceCart(items, "SAVE10")).toMatchObject({
+      discountCents: 30,
+      totalCents: 265,
+    });
+  });
+
+  it("never takes the total below zero", () => {
+    expect(priceCart([], "SAVE10").totalCents).toBe(0);
   });
 });
 

@@ -1,4 +1,5 @@
 import { PRODUCTS } from "./products";
+import { findPromotion, normalizePromoCode } from "./promotions";
 import type { CartItem } from "./types";
 
 /** Add one of a product, starting a new line if it is not in the cart. */
@@ -41,6 +42,18 @@ export function parseStoredCart(raw: string | null): CartItem[] {
   } catch {
     return [];
   }
+}
+
+/**
+ * Read the promo code saved by an earlier visit. Only a code that is still
+ * live is kept; anything else is dropped.
+ */
+export function parseStoredPromoCode(raw: string | null): string | null {
+  if (!raw) {
+    return null;
+  }
+  const code = normalizePromoCode(raw);
+  return findPromotion(code) ? code : null;
 }
 
 function isStoredItem(value: unknown): value is CartItem {

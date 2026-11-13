@@ -4,6 +4,7 @@ import {
   changeQuantity,
   countItems,
   parseStoredCart,
+  parseStoredPromoCode,
 } from "../lib/cart";
 import type { CartItem } from "../lib/types";
 
@@ -62,5 +63,21 @@ describe("parseStoredCart", () => {
       null,
     ]);
     expect(parseStoredCart(raw)).toEqual([{ productId: "drip", quantity: 3 }]);
+  });
+});
+
+describe("parseStoredPromoCode", () => {
+  it("returns null for missing or blank data", () => {
+    expect(parseStoredPromoCode(null)).toBeNull();
+    expect(parseStoredPromoCode("")).toBeNull();
+    expect(parseStoredPromoCode("   ")).toBeNull();
+  });
+
+  it("keeps a live code, normalized", () => {
+    expect(parseStoredPromoCode(" save10 ")).toBe("SAVE10");
+  });
+
+  it("drops codes that are no longer live", () => {
+    expect(parseStoredPromoCode("EXPIRED20")).toBeNull();
   });
 });

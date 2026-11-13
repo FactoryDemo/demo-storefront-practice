@@ -6,15 +6,16 @@ import { useEffect, useRef } from "react";
 import { formatCurrency } from "../lib/currency";
 import {
   BULK_DISCOUNT_THRESHOLD,
-  calculateCartTotal,
   calculateLineTotal,
+  priceCart,
 } from "../lib/pricing";
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
+import { PromoCodeField } from "./PromoCodeField";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, promoCode, isOpen, closeCart, changeQuantity } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -34,6 +35,8 @@ export function CartDrawer() {
   if (!isOpen) {
     return null;
   }
+
+  const pricing = priceCart(items, promoCode ?? undefined);
 
   return (
     <>
@@ -74,9 +77,16 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <PromoCodeField />
+              {pricing.discountCents > 0 && (
+                <div className="cart-discount">
+                  <span>Promo {pricing.promoCode}</span>
+                  <span>−{formatCurrency(pricing.discountCents)}</span>
+                </div>
+              )}
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>{formatCurrency(pricing.totalCents)}</span>
               </div>
               <Link
                 href="/checkout"

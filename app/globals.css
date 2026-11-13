@@ -506,6 +506,74 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.cart-discount,
+.order-subtotal,
+.order-discount {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-subtotal,
+.order-discount {
+  margin-bottom: 8px;
+}
+
+.promo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-row {
+  display: flex;
+  gap: 8px;
+}
+
+.promo-row input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--sand-deep);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.promo-row input:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
+.promo-error {
+  margin: 0;
+  font-size: 13px;
+  color: #8a3416;
+}
+
+.promo-applied {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.text-button {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);
