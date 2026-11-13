@@ -27,6 +27,18 @@ describe("validateOrderRequest", () => {
     });
   });
 
+  it("keeps a live promo code, normalized", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result.ok && result.request.promoCode).toBe("SAVE10");
+  });
+
+  it("drops unknown or non-string promo codes", () => {
+    for (const promoCode of ["NOPE", "", 10, null]) {
+      const result = validateOrderRequest({ ...VALID, promoCode });
+      expect(result.ok && "promoCode" in result.request).toBe(false);
+    }
+  });
+
   it("rejects input that is not an object", () => {
     expect(errorsFor(null)).toEqual(["Order must be a JSON object."]);
     expect(errorsFor("order")).toEqual(["Order must be a JSON object."]);
@@ -124,6 +136,25 @@ describe("buildOrder", () => {
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
     });
+  });
+});
+
+describe("buildOrder with a promo code", () => {
+  it("applies SAVE10 to the server-side total", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "asap",
+        items: [
+          { productId: "drip", quantity: 3 },
+          { productId: "espresso", quantity: 1 },
+        ],
+        promoCode: "SAVE10",
+      },
+      "BB-TEST02",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.totalCents).toBe(1116);
   });
 });
 
