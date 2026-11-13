@@ -1,6 +1,6 @@
 # Lore
 
-Bean & Byte's available history is short: **42 commits from 2026-11-01 to 2026-11-12**, ending at [`e9d6df4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a). The eras below come from the complete reachable Git log, commit diffs, historical blobs, and blame, rather than reconstructed release notes or assumed motivations. Dates are recorded commit dates. See [by the numbers](by-the-numbers.md) for the counting methods and [design choices](background.md) for current boundaries.
+Bean & Byte's November 12 historical snapshot contained **42 commits from 2026-11-01 to 2026-11-12**, ending at [`e9d6df4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a). The account below preserves that snapshot and notes the subsequent November 13 automation update. It comes from the complete reachable Git log, commit diffs, historical blobs, and blame, rather than reconstructed release notes or assumed motivations. Dates are recorded commit dates. See [by the numbers](by-the-numbers.md) for current counts and [design choices](background.md) for current boundaries.
 
 ## 2026-11-01: A five-item storefront and a pricing core
 
@@ -59,7 +59,7 @@ Review orchestration was repeatedly revised rather than simply accumulating work
 
 - **November 12:** [`11789b4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/11789b48e07aaee25433cc2f67bb15e101c401a5) added wiki-only push exclusions and requested squash auto-merge for the generated PR in `.github/workflows/droid-wiki-refresh.yml`, with a warning if the request fails. [`c153cf5`](https://github.com/FactoryDemo/demo-storefront-practice/commit/c153cf561070227aa3207b16bf534fd4cdade1bd) then refreshed the tracked wiki. Auto-merge being requested is not evidence that branch-protection requirements were bypassed or that every later run merged.
 
-The later [tracked-tree restoration](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a) removed both the wiki-only push exclusions and the auto-merge request steps. At the current snapshot, pushes to `main` have no wiki-only exclusion, and generated PRs await review and manual merge. The current organization and publication limits are documented in [deployment](deployment.md).
+The later [tracked-tree restoration on November 12](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a) removed both the wiki-only push exclusions and the auto-merge request steps. The [November 13 wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/75fc56bcf97d4ee9927a5e285329f83be3a974af) restored both in `.github/workflows/droid-wiki-refresh.yml`. Its committer timestamp is **2026-11-13 01:02:19 UTC**, while its author timestamp is November 12 at 20:02:19 −05:00. Wiki-only pushes are excluded again, and generated PRs request squash auto-merge subject to required checks and reviews. See [deployment](deployment.md) for current publication behavior.
 
 ## 2026-11-12: SAVE10 rehearsal, reintroduction, and two reversions
 
@@ -91,7 +91,7 @@ At **20:58:33 UTC (15:58:33 −05:00)**, [`e9d6df4`](https://github.com/FactoryD
 
 ## Growth, 2026-11-01–2026-11-12
 
-Using the same physical-line categories as [by the numbers](by-the-numbers.md), the root-to-snapshot change is:
+Using the same physical-line categories as [by the numbers](by-the-numbers.md), the root-to-`e9d6df4` historical snapshot change is:
 
 | Measure | 2026-11-01 root | 2026-11-12 snapshot |
 | --- | ---: | ---: |
