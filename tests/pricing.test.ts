@@ -67,13 +67,26 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
 
-  it("applies SAVE10 to the order after bulk line discounts", () => {
+  it("applies SAVE10 to lines without a bulk discount", () => {
     const items: CartItem[] = [
       { productId: "drip", quantity: 3 }, // bulk: 945
       { productId: "espresso", quantity: 1 }, // 295
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
-    expect(calculateCartTotal(items, " save10 ")).toBe(1116);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateCartTotal(items, " save10 ")).toBe(1210);
+  });
+
+  it("does not apply SAVE10 to lines already discounted by bulk pricing", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 3 }]; // bulk: 797
+    expect(calculateCartTotal(items, "SAVE10")).toBe(797);
+  });
+
+  it("applies SAVE10 only to non-bulk lines in a mixed cart", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // 295, promo: -30
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
   });
 
   it("rounds the promo discount to the nearest cent", () => {

@@ -4,7 +4,7 @@ export type Promotion = {
   /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
   code: string;
   description: string;
-  /** Cents off the order, given its lines after bulk pricing. */
+  /** Cents off eligible order lines that were not bulk-discounted. */
   discountCents(lines: PricedLine[]): number;
 };
 

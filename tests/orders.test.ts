@@ -145,7 +145,7 @@ describe("buildOrder", () => {
     });
   });
 
-  it("applies an accepted promo code when building the order", () => {
+  it("does not stack an accepted promo code with a bulk discount", () => {
     const order = buildOrder(
       {
         name: "Ada",
@@ -156,7 +156,7 @@ describe("buildOrder", () => {
       "BB-TEST02",
       new Date("2026-01-02T03:04:05.000Z")
     );
-    expect(order.totalCents).toBe(850);
+    expect(order.totalCents).toBe(945);
     expect(order.promoCode).toBe("SAVE10");
   });
 });
