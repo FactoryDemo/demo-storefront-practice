@@ -108,3 +108,7 @@ and what to do when one fires, is in `docs/runbooks/observability.md`.
 - Read CI results only when a task asks you to fix a failing check on a PR.
   Push that fix to the same PR and stop again.
 - Never commit `.env*` files or secrets.
+- Build every feature from the request and the current code. Do not read,
+  reuse, or revert earlier attempts from git history (reverted commits,
+  closed or merged PRs, `Rehearsal-*` commits); do not run `git show`,
+  `git log -p`, or `git revert` on them.
