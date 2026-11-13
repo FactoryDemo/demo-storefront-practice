@@ -1,6 +1,6 @@
 # By the numbers
 
-Data collected on **2026-11-12**, commit [`e9d6df4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a). These are repository measurements, not production usage or individual contributor statistics. See [architecture](overview/architecture.md) for what the code does and [lore](lore.md) for how it grew.
+Data collected on **2026-11-13**, commit [`75fc56b`](https://github.com/FactoryDemo/demo-storefront-practice/commit/75fc56bcf97d4ee9927a5e285329f83be3a974af). These are repository measurements, not production usage or individual contributor statistics. See [architecture](overview/architecture.md) for what the code does and [lore](lore.md) for how it grew.
 
 ## Scope and counting rules
 
@@ -10,24 +10,24 @@ The snapshot uses `git ls-tree -r --name-only HEAD` and each file's committed co
 | --- | --- | ---: | ---: |
 | Source | All tracked files under `app/`, `components/`, `lib/`, `server/`, `scripts/`, plus `instrumentation.ts`; includes CSS and operational JavaScript | 41 | 3,342 |
 | Tests | `tests/` and `e2e/`: seven Vitest modules and one Playwright module | 8 | 776 |
-| Configuration and automation | Remaining non-Markdown text outside `droid-wiki/`: root configs/manifests, `.github/` YAML and ownership rules, `.devcontainer/`, `.husky/`, `.env.example`, and `observability/grafana/` JSON | 35 | 1,686 |
-| **Source + tests + configuration** | Disjoint categories above | **84** | **5,804** |
+| Configuration and automation | Remaining non-Markdown text outside `droid-wiki/`: root configs/manifests, `.github/` YAML and ownership rules, `.devcontainer/`, `.husky/`, `.env.example`, and `observability/grafana/` JSON | 35 | 1,704 |
+| **Source + tests + configuration** | Disjoint categories above | **84** | **5,822** |
 | Documentation | Tracked Markdown outside `droid-wiki/`, including `AGENTS.md`, `README.md`, `docs/`, GitHub templates, and `.factory/skills/storefront-qa/SKILL.md` | 9 | 586 |
-| Generated wiki | Tracked `droid-wiki/`: 31 Markdown pages (1,670 lines) and `droid-wiki/.wiki-meta.json` (63 lines) | 32 | 1,733 |
+| Generated wiki | Tracked `droid-wiki/`: 31 Markdown pages (1,783 lines) and `droid-wiki/.wiki-meta.json` (64 lines) | 32 | 1,847 |
 | Assets | JPEG files under `public/products/`; no binary line count | 13 | Not counted |
 | Excluded generated/lock files | `package-lock.json` and `next-env.d.ts` | 2 | Excluded |
 
 There are **140 tracked files** in total: 84 source/test/configuration + 9 non-wiki documentation + 32 wiki + 13 assets + 2 excluded files. There is **one package**, defined by the single tracked `package.json`; this is not a monorepo. No `node_modules/`, generated `droid-wiki/`, build artifacts, lockfile lines, or JPEG bytes enter source metrics. Test/source ratios are **8:41 files** and **23.2% physical lines**; neither measures coverage.
 
-Since the prior snapshot at [`05be85e`](https://github.com/FactoryDemo/demo-storefront-practice/commit/05be85e2a6da3930a48c3b3a6ebc53d2e2567b40), the committed delta is **19 files, 136 additions and 266 deletions**: a wiki refresh followed by restoration of an earlier tracked tree. The only non-wiki change removes 18 lines from `.github/workflows/droid-wiki-refresh.yml`: wiki-only push exclusions and squash auto-merge steps. Source and tests are unchanged; generated PRs again await review and manual merge.
+Since the prior snapshot at [`e9d6df4`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a), the committed delta is **19 files, 233 additions and 101 deletions**. The only non-wiki change adds 18 lines to `.github/workflows/droid-wiki-refresh.yml`: wiki-only push exclusions and best-effort squash auto-merge steps. Source and tests are unchanged.
 
-For historical comparison, the earlier delta from [`e0462e9`](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53) to `05be85e` was **33 files, 227 additions and 634 deletions**: an intervening wiki refresh and the second SAVE10 reversion. That reversion deleted the historical [`components/PromoCodeField.tsx`](https://github.com/FactoryDemo/demo-storefront-practice/blob/e0462e94b0cfa8c89bd419994343526e3800fc53/components/PromoCodeField.tsx) and [`tests/promotions.test.ts`](https://github.com/FactoryDemo/demo-storefront-practice/blob/e0462e94b0cfa8c89bd419994343526e3800fc53/tests/promotions.test.ts); `lib/promotions.ts` still has an empty registry, while the preexisting optional cart-total hook remains. All counts below, including source language totals, directory means, import graphs, and exports, were freshly recomputed from committed blobs. No installed files or concurrent documentation edits enter these counts.
+File, language, directory, activity, attribution, and churn counts were freshly recomputed from committed blobs and history. The complete source-path set and all **41 source blob IDs** match the prior snapshot at `e9d6df4`, so the import graph and export measurements below are retained from its parser run, not newly parsed. No installed files or concurrent documentation edits enter these counts.
 
 ## Source languages
 
 ```mermaid
 xychart-beta horizontal
-  title "Committed source physical lines: 2026-11-12"
+  title "Committed source physical lines: 2026-11-13"
   x-axis ["TypeScript + TSX", "CSS", "JavaScript"]
   y-axis "Physical lines" 0 --> 2200
   bar [1900, 756, 686]
@@ -60,29 +60,29 @@ Arithmetic mean = physical lines divided by files, including CSS where present. 
 
 ## Activity and attribution
 
-The complete history reachable from `HEAD` contains **42 commits**, from **2026-11-01 through 2026-11-12**: **37 non-merge commits and five merges**. Counts below include merges and use recorded committer calendar dates (`git log --format=%cs`), with Monday-based weeks. The newest week and November are incomplete.
+The complete history reachable from the pinned commit contains **43 commits**, from **2026-11-01 through 2026-11-13**: **38 non-merge commits and five merges**. Counts below include merges and use recorded committer calendar dates (`git log --format=%cs`), with Monday-based weeks. The newest week and November are incomplete.
 
 | Recent week | Commits |
 | --- | ---: |
 | 2026-10-19–2026-10-25 | 0 |
 | 2026-10-26–2026-11-01 | 1 |
 | 2026-11-02–2026-11-08 | 20 |
-| 2026-11-09–2026-11-12, through snapshot | 21 |
+| 2026-11-09–2026-11-13, through snapshot | 22 |
 
 | Recent month | Commits |
 | --- | ---: |
 | 2026-08 | 0 |
 | 2026-09 | 0 |
 | 2026-10 | 0 |
-| 2026-11, through November 12 | 42 |
+| 2026-11, through November 13 | 43 |
 
 Zero earlier counts mean the repository did not yet have commits, not an observed slowdown in an established project.
 
-**23 of 42 commits (54.8%) are explicitly bot-attributed.** A commit qualifies when its author name/email contains `[bot]` or a `Co-authored-by:` trailer contains `[bot]`; each commit is counted once. Here that is two bot-authored dependency commits and 21 bot-coauthored commits, with no overlap. The [initial wiki-only commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/3c5575cfdba7a787f77a313b622e4cff70d9596f) has neither marker; the [SAVE10 rehearsal commit](https://github.com/FactoryDemo/demo-storefront-practice/commit/b83863dbfa7836f5215e9672534cc57a9b828baa) has bot coauthor markers and counts once despite repeated trailers. The [reversion](https://github.com/FactoryDemo/demo-storefront-practice/commit/3461fc30f6b24b1cc8a7497bdfcd9e34c9bc90df) and [wiki automation update](https://github.com/FactoryDemo/demo-storefront-practice/commit/11789b48e07aaee25433cc2f67bb15e101c401a5) also have bot coauthor trailers. The later-reverted [SAVE10 reintroduction](https://github.com/FactoryDemo/demo-storefront-practice/commit/e0462e94b0cfa8c89bd419994343526e3800fc53) is bot-coauthored; the [intervening wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/df7bd0fbd8dfc3a24a3a4b38d381f88600955014) has neither marker. The [second reversion](https://github.com/FactoryDemo/demo-storefront-practice/commit/05be85e2a6da3930a48c3b3a6ebc53d2e2567b40) is bot-coauthored. The [latest committed wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/aa056783497ce16d5216a9f6c8c051389110a5de) has neither marker; the [tracked-tree restoration](https://github.com/FactoryDemo/demo-storefront-practice/commit/e9d6df400272dc8e53f15eb848b92917697b547a) is bot-coauthored. Subjects alone are not evidence of attribution. Merge messages are not inferred to inherit attribution from their parents. This is a **lower bound on AI-assisted work**, not a measurement of AI-written lines: bot attribution also includes dependency automation, and uncredited assistance cannot be detected from Git. No individual rankings are inferred.
+**24 of 43 commits (55.8%) are explicitly bot-attributed.** A commit qualifies when its author name/email contains `[bot]` or a `Co-authored-by:` line contains `[bot]` (case-insensitive); each commit is counted once. Here that is two bot-authored dependency commits and 22 bot-coauthored commits, with no overlap. The [latest committed wiki refresh](https://github.com/FactoryDemo/demo-storefront-practice/commit/75fc56bcf97d4ee9927a5e285329f83be3a974af) adds one bot-coauthored commit since the prior snapshot. Repeated coauthor markers still count once. Subjects alone are not evidence of attribution, and merge messages do not inherit attribution from their parents. This is a **lower bound on AI-assisted work**, not a measurement of AI-written lines: bot attribution also includes dependency automation, and uncredited assistance cannot be detected from Git. No individual rankings are inferred.
 
 ### Highest-churn paths in the last 90 days
 
-Window: **2026-08-15 00:00 UTC inclusive to 2026-11-13 00:00 UTC exclusive**. Sum additions and deletions from `git diff-tree --root --numstat -r` for every reachable non-merge commit in that window. Initial additions count; merge diffs do not count twice. Exclude binaries, lockfiles, generated declarations/wiki, and installed dependencies. Non-wiki documentation and configuration remain eligible. All 37 non-merge commits fall inside this window.
+Window: **2026-08-16 00:00 UTC inclusive to 2026-11-14 00:00 UTC exclusive**, the 90 calendar days ending on the collection date. Filter by committer timestamp and sum additions and deletions from `git diff-tree --root --numstat -r` for every reachable non-merge commit in that window. Initial additions count; merge diffs do not count twice. Exclude binaries, lockfiles, generated declarations/wiki, and installed dependencies. Non-wiki documentation and configuration remain eligible. All 38 non-merge commits fall inside this window; the pinned commit excludes any later activity on the collection date.
 
 | Path | Added | Deleted | Churn (added + deleted) | Touching non-merge commits |
 | --- | ---: | ---: | ---: | ---: |
@@ -103,7 +103,7 @@ The highest-churn directories use the same window and exclusions. A commit touch
 | --- | ---: | ---: | ---: | ---: |
 | `components/` | 1,120 | 324 | 1,444 | 7 |
 | `tests/` | 969 | 323 | 1,292 | 9 |
-| `.github/` | 947 | 197 | 1,144 | 21 |
+| `.github/` | 965 | 197 | 1,162 | 22 |
 | `app/` | 1,040 | 86 | 1,126 | 6 |
 | `lib/` | 670 | 122 | 792 | 10 |
 
@@ -111,7 +111,7 @@ This young repository's churn is mostly construction, not a defect-rate or maint
 
 ## Static relative import depth
 
-The TypeScript parser inspected the committed contents of all **40 source TS/TSX/MJS modules** at this snapshot. Only top-level static ES `import` and `export … from` declarations with relative specifiers are edges; resolve to tracked source files using the literal path, supported module extensions, or an index module. CSS is a terminal source node. There are **79 resolved static relative edges**, including **14 type-only edges**, and no unresolved relative imports or cycles in this measured graph.
+The prior snapshot's TypeScript parser inspected the committed contents of all **40 source TS/TSX/MJS modules**. Their blob IDs and the complete source-path set are unchanged at this snapshot, so its graph measurements remain valid without a new parser run. Only top-level static ES `import` and `export … from` declarations with relative specifiers are edges; resolve to tracked source files using the literal path, supported module extensions, or an index module. CSS is a terminal source node. There are **79 resolved static relative edges**, including **14 type-only edges**, and no unresolved relative imports or cycles in this measured graph.
 
 The deepest path has **nine edges / ten files**, including type-only dependencies:
 
@@ -145,7 +145,7 @@ Depth is the longest simple path, not the number of imports in one module. Neith
 
 ## Exported symbols by source module
 
-These measurements were freshly parsed from committed source modules. They count explicit top-level exported bindings, including types, constants, functions, and Next.js default exports. `default` counts once under that name; local non-exported helpers do not count. There are no source re-export declarations to expand. These are module-boundary symbols, not necessarily supported public APIs.
+These measurements are retained from the prior parser run after verifying identical source paths and blob IDs. They count explicit top-level exported bindings, including types, constants, functions, and Next.js default exports. `default` counts once under that name; local non-exported helpers do not count. There are no source re-export declarations to expand. These are module-boundary symbols, not necessarily supported public APIs.
 
 Across the single package’s 40 source modules: **98 exports = 76 value bindings + 22 type-only declarations**; **34 modules export something**, and six command-line entrypoints export nothing.
 
@@ -194,6 +194,6 @@ Across the single package’s 40 source modules: **98 exports = 76 value binding
 
 ## Reproducing and interpreting the snapshot
 
-Use the pinned commit above, enumerate tracked files with `git ls-tree`, and read blobs with `git show`; apply the category definitions before summing physical lines. `git log HEAD` includes all reachable branches already merged, unlike `--first-parent`. For attribution, inspect author metadata and actual coauthor trailers, not commit subjects. For churn, use `git rev-list --no-merges --since=2026-08-15T00:00:00Z --until=2026-11-13T00:00:00Z HEAD` followed by per-commit `git diff-tree --root --no-commit-id --numstat -r`.
+Use the pinned commit above wherever these rules say `HEAD`, enumerate tracked files with `git ls-tree`, and read blobs with `git show`; apply the category definitions before summing physical lines. `git log HEAD` includes all reachable branches already merged, unlike `--first-parent`. For attribution, inspect author metadata and explicit `Co-authored-by:` lines, not commit subjects. For churn, enumerate `git rev-list --no-merges HEAD`, retain commits whose `%ct` timestamp is at least `2026-08-16T00:00:00Z` and strictly before `2026-11-14T00:00:00Z`, then run per-commit `git diff-tree --root --no-commit-id --numstat -r`. Sum numeric entries only and count each eligible commit once per touched path or top-level directory. Comparing the source path sets and their blob IDs from `git ls-tree -r` at both pinned commits reproduces the unchanged-input verification for imports and exports.
 
 The measurements are a one-time snapshot, not a committed analyzer or a live dashboard. No dependency freshness, production traffic, test execution, incident count, or unrecorded development activity is inferred. [Lore](lore.md) connects these counts to the actual commits.
