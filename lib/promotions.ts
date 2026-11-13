@@ -4,7 +4,7 @@ export type Promotion = {
   /** Uppercase code a customer types at checkout, e.g. "WELCOME". */
   code: string;
   description: string;
-  /** Cents off the order, given its lines after bulk pricing. */
+  /** Cents off the order, given only the lines eligible for promo codes (no bulk pricing). */
   discountCents(lines: PricedLine[]): number;
 };
 
@@ -12,7 +12,7 @@ export type Promotion = {
 export const PROMOTIONS: Promotion[] = [
   {
     code: "SAVE10",
-    description: "Launch promo: 10% off your order",
+    description: "Launch promo: 10% off lines without a bulk discount",
     discountCents: (lines) =>
       Math.round(
         lines.reduce((sum, line) => sum + line.lineTotalCents, 0) * 0.1

@@ -37,11 +37,19 @@ describe("promo codes", () => {
   });
 
   it("prices the order with the promo on the server", () => {
+    const items = [{ productId: "latte", quantity: 2 }]; // 950, no bulk discount
+    const result = validateOrderRequest({ ...VALID, items, promoCode: "SAVE10" });
+    if (!result.ok) throw new Error("expected valid request");
+    const order = buildOrder(result.request, "BB-1", new Date(0));
+    expect(order.totalCents).toBe(855);
+    expect(order.promoCode).toBe("SAVE10");
+  });
+
+  it("does not stack the promo with the bulk discount", () => {
     const result = validateOrderRequest({ ...VALID, promoCode: "SAVE10" });
     if (!result.ok) throw new Error("expected valid request");
     const order = buildOrder(result.request, "BB-1", new Date(0));
-    expect(order.totalCents).toBe(850); // 945 less a 95 cent discount (94.5 rounds up)
-    expect(order.promoCode).toBe("SAVE10");
+    expect(order.totalCents).toBe(945);
   });
 });
 
