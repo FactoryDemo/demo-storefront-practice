@@ -61,6 +61,27 @@ test("three of one item get 10% off that cart line", async ({ page }) => {
   await expect(cart.locator(".cart-total")).toContainText("$9.45");
 });
 
+test("SAVE10 takes 10% off the order at checkout", async ({ page }) => {
+  await openStorefront(page);
+  await addToCart(page, "Drip Coffee", 3);
+  await addToCart(page, "Espresso");
+
+  const cart = await openCart(page);
+  await cart.getByLabel("Promo code").fill("save10");
+  await expect(cart.locator(".cart-promo-discount")).toContainText("$1.24");
+  // $12.40 subtotal less 10% ($1.24) is $11.16.
+  await expect(cart.locator(".cart-total")).toContainText("$11.16");
+  await cart.getByRole("link", { name: "Checkout" }).click();
+
+  await expect(page).toHaveURL(/\/checkout$/);
+  await page.getByLabel("Name for the order").fill("Ada");
+  await page.getByRole("button", { name: "Place order · $11.16" }).click();
+
+  await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
+  await expect(page.locator(".order-total")).toContainText("$11.16");
+  await expect(page.locator(".order-promo-discount")).toContainText("$1.24");
+});
+
 test("the cart survives a page reload", async ({ page }) => {
   await openStorefront(page);
   await addToCart(page, "Latte", 2);
@@ -120,6 +141,30 @@ test("POST /api/orders recomputes totals and rejects bad orders", async ({
   });
   expect(rejected.status()).toBe(400);
   expect((await rejected.json()).errors).toHaveLength(2);
+
+  const promoted = await request.post("/api/orders", {
+    data: {
+      name: "Ada",
+      pickup: "asap",
+      items: [{ productId: "drip", quantity: 3 }],
+      promoCode: "save10",
+    },
+  });
+  expect(promoted.status()).toBe(201);
+  expect(await promoted.json()).toMatchObject({
+    promoCode: "SAVE10",
+    totalCents: 850,
+  });
+
+  const badPromo = await request.post("/api/orders", {
+    data: {
+      name: "Ada",
+      pickup: "asap",
+      items: [{ productId: "drip", quantity: 3 }],
+      promoCode: "FREE",
+    },
+  });
+  expect(badPromo.status()).toBe(400);
 });
 
 test("GET /api/health returns ok", async ({ request }) => {

@@ -83,6 +83,27 @@ describe("validateOrderRequest", () => {
     expect(errorsFor({})).toHaveLength(3);
   });
 
+  it("accepts a known promo code and stores its canonical form", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result.ok && result.request.promoCode).toBe("SAVE10");
+  });
+
+  it("treats a blank or missing promo code as no promo code", () => {
+    const blank = validateOrderRequest({ ...VALID, promoCode: "  " });
+    expect(blank.ok && blank.request.promoCode).toBeUndefined();
+    const missing = validateOrderRequest(VALID);
+    expect(missing.ok && missing.request.promoCode).toBeUndefined();
+  });
+
+  it("rejects unknown promo codes and non-text promo codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "FREE" })).toEqual([
+      "Promo code is not recognized.",
+    ]);
+    expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual([
+      "Promo code must be text.",
+    ]);
+  });
+
   it("merges repeated products into one line", () => {
     const result = validateOrderRequest({
       ...VALID,
@@ -121,9 +142,29 @@ describe("buildOrder", () => {
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },
       ],
+      promoCode: null,
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
     });
+  });
+
+  it("applies the promo code to the total and records it", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "in-15",
+        items: [
+          { productId: "drip", quantity: 3 }, // bulk: 945
+          { productId: "espresso", quantity: 1 }, // 295
+        ],
+        promoCode: "SAVE10",
+      },
+      "BB-TEST02",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.promoCode).toBe("SAVE10");
+    expect(order.totalCents).toBe(1116); // 1240 less 124
+    expect(order.lines.map((line) => line.lineTotalCents)).toEqual([945, 295]);
   });
 });
 

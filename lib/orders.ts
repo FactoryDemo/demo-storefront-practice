@@ -1,5 +1,6 @@
 import { calculateCartTotal, priceLines } from "./pricing";
 import { PRODUCTS } from "./products";
+import { findPromotion } from "./promotions";
 import type { CartItem, PricedLine } from "./types";
 
 export type PickupSlotId = "asap" | "in-15" | "in-30" | "in-45" | "in-60";
@@ -20,11 +21,15 @@ export const PICKUP_SLOTS: PickupSlot[] = [
 export const MAX_NAME_LENGTH = 60;
 export const MAX_LINE_QUANTITY = 99;
 
-/** A validated checkout request: who is picking up, when, and what. */
+/**
+ * A validated checkout request: who is picking up, when, what, and an
+ * optional promo code. `promoCode` is the canonical code, e.g. "SAVE10".
+ */
 export type OrderRequest = {
   name: string;
   pickup: PickupSlotId;
   items: CartItem[];
+  promoCode?: string;
 };
 
 /** A placed order. Totals are computed on the server from the catalog. */
@@ -33,6 +38,8 @@ export type Order = {
   name: string;
   pickup: PickupSlotId;
   lines: PricedLine[];
+  /** The promo code applied to the order, or null. */
+  promoCode: string | null;
   totalCents: number;
   placedAt: string;
 };
@@ -48,23 +55,26 @@ export function validateOrderRequest(input: unknown): OrderValidation {
   if (typeof input !== "object" || input === null) {
     return { ok: false, errors: ["Order must be a JSON object."] };
   }
-  const { name, pickup, items } = input as Record<string, unknown>;
+  const { name, pickup, items, promoCode } = input as Record<string, unknown>;
   const errors = [
     ...validateName(name),
     ...validatePickup(pickup),
     ...validateItems(items),
+    ...validatePromoCode(promoCode),
   ];
   if (errors.length > 0) {
     return { ok: false, errors };
   }
-  return {
-    ok: true,
-    request: {
-      name: (name as string).trim(),
-      pickup: pickup as PickupSlotId,
-      items: mergeItems(items as CartItem[]),
-    },
+  const request: OrderRequest = {
+    name: (name as string).trim(),
+    pickup: pickup as PickupSlotId,
+    items: mergeItems(items as CartItem[]),
   };
+  const canonicalCode = canonicalPromoCode(promoCode);
+  if (canonicalCode) {
+    request.promoCode = canonicalCode;
+  }
+  return { ok: true, request };
 }
 
 /** Price a validated request into an order. */
@@ -78,7 +88,8 @@ export function buildOrder(
     name: request.name,
     pickup: request.pickup,
     lines: priceLines(request.items),
-    totalCents: calculateCartTotal(request.items),
+    promoCode: request.promoCode ?? null,
+    totalCents: calculateCartTotal(request.items, request.promoCode),
     placedAt: placedAt.toISOString(),
   };
 }
@@ -121,6 +132,27 @@ function validateItem(item: unknown, index: number): string[] {
     );
   }
   return errors;
+}
+
+/** A missing or blank promo code is fine; anything else must be live. */
+function validatePromoCode(promoCode: unknown): string[] {
+  if (promoCode === undefined || promoCode === null) {
+    return [];
+  }
+  if (typeof promoCode !== "string") {
+    return ["Promo code must be text."];
+  }
+  if (promoCode.trim().length === 0) {
+    return [];
+  }
+  return findPromotion(promoCode) ? [] : ["Promo code is not recognized."];
+}
+
+function canonicalPromoCode(promoCode: unknown): string | undefined {
+  if (typeof promoCode !== "string") {
+    return undefined;
+  }
+  return findPromotion(promoCode)?.code;
 }
 
 function isValidQuantity(quantity: unknown): boolean {

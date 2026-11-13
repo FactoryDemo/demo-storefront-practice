@@ -66,6 +66,35 @@ describe("calculateCartTotal", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "NOT-A-CODE")).toBe(950);
   });
+
+  it("takes 10% off the cart with SAVE10", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
+    expect(calculateCartTotal(items, "SAVE10")).toBe(855);
+  });
+
+  it("matches the promo code without case or whitespace sensitivity", () => {
+    const items: CartItem[] = [{ productId: "espresso", quantity: 1 }]; // 295
+    expect(calculateCartTotal(items, " save10 ")).toBe(265);
+  });
+
+  it("applies SAVE10 after bulk pricing", () => {
+    const items: CartItem[] = [{ productId: "drip", quantity: 3 }]; // bulk: 945
+    // 10% of 945 is 94.5, which rounds up to 95 cents off.
+    expect(calculateCartTotal(items, "SAVE10")).toBe(850);
+  });
+
+  it("applies SAVE10 across discounted and undiscounted lines", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "cold-brew", quantity: 1 }, // regular: 425
+    ];
+    // Subtotal 1370, so 137 cents off.
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1233);
+  });
+
+  it("returns 0 for an empty cart with SAVE10", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+  });
 });
 
 describe("formatCurrency", () => {
