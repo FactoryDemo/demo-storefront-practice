@@ -140,7 +140,7 @@ describe("buildOrder", () => {
 });
 
 describe("buildOrder with a promo code", () => {
-  it("applies SAVE10 to the server-side total", () => {
+  it("does not stack SAVE10 on bulk-priced lines in the server-side total", () => {
     const order = buildOrder(
       {
         name: "Ada",
@@ -154,7 +154,43 @@ describe("buildOrder with a promo code", () => {
       "BB-TEST02",
       new Date("2026-01-02T03:04:05.000Z")
     );
-    expect(order.totalCents).toBe(1116);
+    expect(order.totalCents).toBe(1210);
+  });
+
+  it("applies SAVE10 to a non-bulk order", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "asap",
+        items: [{ productId: "espresso", quantity: 2 }],
+        promoCode: "SAVE10",
+      },
+      "BB-TEST03",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.totalCents).toBe(531);
+  });
+
+  it("keeps bulk pricing after request validation merges repeated products", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      items: [
+        { productId: "espresso", quantity: 1 },
+        { productId: "espresso", quantity: 2 },
+      ],
+      promoCode: " save10 ",
+      totalCents: 1,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(
+        buildOrder(
+          result.request,
+          "BB-TEST04",
+          new Date("2026-01-02T03:04:05.000Z")
+        ).totalCents
+      ).toBe(797);
+    }
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -69,10 +70,44 @@ describe("calculateCartTotal", () => {
 
   it("takes 10% off the order with SAVE10", () => {
     const items: CartItem[] = [
-      { productId: "drip", quantity: 3 }, // bulk: 945
-      { productId: "espresso", quantity: 1 }, // 295, subtotal 1240
+      { productId: "drip", quantity: 2 }, // 700
+      { productId: "espresso", quantity: 2 }, // 590, subtotal 1290
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1161);
+  });
+
+  it("never stacks a promo code with bulk pricing (FIN-212)", () => {
+    for (const product of PRODUCTS) {
+      for (const quantity of [3, 4, 99]) {
+        const items = [{ productId: product.id, quantity }];
+        for (const promotion of PROMOTIONS) {
+          expect(calculateCartTotal(items, promotion.code)).toBe(
+            calculateCartTotal(items)
+          );
+        }
+      }
+    }
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("discounts only non-bulk lines in a mixed cart", () => {
+    const items = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // SAVE10: 295 - 30
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateCartTotal([...items].reverse(), "SAVE10")).toBe(1210);
+  });
+
+  it("re-evaluates promo eligibility when crossing the bulk threshold", () => {
+    for (const quantity of [2, 3, 4, 2]) {
+      const expected = { 2: 531, 3: 797, 4: 1062 }[quantity];
+      expect(
+        calculateCartTotal([{ productId: "espresso", quantity }], "SAVE10")
+      ).toBe(expected);
+    }
   });
 
   it("matches SAVE10 case-insensitively and ignores whitespace", () => {
