@@ -754,3 +754,26 @@ main {
     font-size: 18px;
   }
 }
+
+.promo-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.promo-form .field {
+  flex: 1;
+}
+
+.promo-form .field-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.cart-discount {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}

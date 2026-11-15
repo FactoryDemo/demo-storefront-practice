@@ -132,3 +132,28 @@ describe("pickupLabel", () => {
     expect(pickupLabel("in-30")).toBe("In 30 minutes");
   });
 });
+
+describe("promo codes", () => {
+  it("normalizes a valid code and discounts the order total", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.request.promoCode).toBe("SAVE10");
+    const order = buildOrder(result.request, "BB-TEST", new Date(0));
+    expect(order.totalCents).toBe(850); // 94.5 off rounds up to 95
+  });
+
+  it("treats a blank code as no code", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: "  " });
+    expect(result.ok && result.request.promoCode).toBeUndefined();
+  });
+
+  it("rejects unknown and non-string codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "NOPE" })).toEqual([
+      "Promo code is not valid.",
+    ]);
+    expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual([
+      "Promo code is not valid.",
+    ]);
+  });
+});
