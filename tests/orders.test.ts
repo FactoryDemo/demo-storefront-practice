@@ -161,9 +161,35 @@ describe("promo codes", () => {
       "BB-TEST02",
       new Date("2026-01-02T03:04:05.000Z")
     );
-    expect(order.totalCents).toBe(1116);
-    expect(order.discountCents).toBe(124);
+    expect(order.totalCents).toBe(1210);
+    expect(order.discountCents).toBe(30);
     expect(order.promoCode).toBe("SAVE10");
+  });
+
+  it("does not stack a promo on bulk lines merged during validation", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      promoCode: "SAVE10",
+      items: [
+        { productId: "espresso", quantity: 1 },
+        { productId: "espresso", quantity: 2 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("Expected a valid order");
+    }
+    const order = buildOrder(
+      result.request,
+      "BB-TEST03",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.totalCents).toBe(797);
+    expect(order.lines).toEqual([
+      { productId: "espresso", quantity: 3, lineTotalCents: 797 },
+    ]);
+    expect(order.discountCents).toBeUndefined();
+    expect(order.promoCode).toBeUndefined();
   });
 });
 

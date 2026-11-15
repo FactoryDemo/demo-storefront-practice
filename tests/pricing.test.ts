@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateDiscountCents,
@@ -63,13 +64,37 @@ describe("calculateCartTotal", () => {
     expect(calculateCartTotal([])).toBe(0);
   });
 
-  it("takes 10% off the whole order with SAVE10, after bulk pricing", () => {
+  it("takes SAVE10 off only non-bulk lines in a mixed cart", () => {
     const items: CartItem[] = [
       { productId: "drip", quantity: 3 }, // 945
       { productId: "espresso", quantity: 1 }, // 295 -> 1240
     ];
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
-    expect(calculateDiscountCents(items, "SAVE10")).toBe(124);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+    expect(calculateDiscountCents(items, "SAVE10")).toBe(30);
+  });
+
+  it("never stacks any promotion with bulk pricing for any product", () => {
+    for (const product of PRODUCTS) {
+      for (const promotion of PROMOTIONS) {
+        for (const quantity of [3, 4, 99]) {
+          const items = [{ productId: product.id, quantity }];
+          expect(calculateDiscountCents(items, promotion.code)).toBe(0);
+          expect(calculateCartTotal(items, promotion.code)).toBe(
+            calculateCartTotal(items)
+          );
+        }
+      }
+    }
+  });
+
+  it("updates promo eligibility when a line crosses the bulk threshold", () => {
+    const items = [{ productId: "espresso", quantity: 2 }];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(531);
+    items[0].quantity = 3;
+    expect(calculateCartTotal(items, "SAVE10")).toBe(797);
+    expect(calculateDiscountCents(items, "SAVE10")).toBe(0);
+    items[0].quantity = 2;
+    expect(calculateCartTotal(items, "SAVE10")).toBe(531);
   });
 
   it("matches SAVE10 case-insensitively and ignoring spaces", () => {
