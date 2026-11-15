@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -81,8 +81,6 @@ describe("formatCurrency", () => {
 });
 
 describe("SAVE10 promo code", () => {
-  const latte3: CartItem[] = [{ productId: "latte", quantity: 3 }];
-
   it("takes 10% off the order total", () => {
     const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
     expect(calculateCartTotal(items, "SAVE10")).toBe(855);
@@ -93,11 +91,37 @@ describe("SAVE10 promo code", () => {
     expect(calculateCartTotal(items, " save10 ")).toBe(855);
   });
 
-  it("stacks on top of the bulk discount", () => {
-    const subtotal = calculateCartTotal(latte3);
-    expect(calculateCartTotal(latte3, "SAVE10")).toBe(
-      subtotal - Math.round(subtotal / 10)
-    );
+  it("never stacks with bulk pricing, at or above the threshold (FIN-212)", () => {
+    for (const product of PRODUCTS) {
+      for (const quantity of [BULK_DISCOUNT_THRESHOLD, 4, 99]) {
+        const items = [{ productId: product.id, quantity }];
+        expect(calculateCartTotal(items, "SAVE10")).toBe(
+          calculateCartTotal(items)
+        );
+      }
+    }
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("discounts only non-bulk lines in a mixed cart", () => {
+    const items = [
+      { productId: "drip", quantity: 3 }, // bulk: 945
+      { productId: "espresso", quantity: 1 }, // eligible: 295
+      { productId: "latte", quantity: 1 }, // eligible: 475
+    ];
+    // Round once over eligible lines: 945 + 770 - 77.
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1638);
+  });
+
+  it("recalculates eligibility when quantities cross the bulk threshold", () => {
+    const items = [{ productId: "espresso", quantity: 2 }];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(531);
+    items[0].quantity = 3;
+    expect(calculateCartTotal(items, "SAVE10")).toBe(797);
+    items[0].quantity = 2;
+    expect(calculateCartTotal(items, "SAVE10")).toBe(531);
   });
 
   it("rounds the discount to the nearest cent", () => {

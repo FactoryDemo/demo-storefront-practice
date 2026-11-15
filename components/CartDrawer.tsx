@@ -116,7 +116,7 @@ function PromoCodeField() {
   if (promoCode) {
     return (
       <p className="promo-applied">
-        {promoCode} applied: 10% off the order.{" "}
+        {promoCode} applied: 10% off items without a bulk discount.{" "}
         <button type="button" className="text-link" onClick={removePromoCode}>
           Remove
         </button>
