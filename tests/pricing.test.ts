@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getProduct } from "../lib/products";
 import {
   calculateCartTotal,
+  calculateDiscountCents,
   calculateLineTotal,
   BULK_DISCOUNT_THRESHOLD,
 } from "../lib/pricing";
@@ -60,6 +61,30 @@ describe("calculateCartTotal", () => {
 
   it("returns 0 for an empty cart", () => {
     expect(calculateCartTotal([])).toBe(0);
+  });
+
+  it("takes 10% off the whole order with SAVE10, after bulk pricing", () => {
+    const items: CartItem[] = [
+      { productId: "drip", quantity: 3 }, // 945
+      { productId: "espresso", quantity: 1 }, // 295 -> 1240
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
+    expect(calculateDiscountCents(items, "SAVE10")).toBe(124);
+  });
+
+  it("matches SAVE10 case-insensitively and ignoring spaces", () => {
+    const items: CartItem[] = [{ productId: "latte", quantity: 2 }]; // 950
+    expect(calculateCartTotal(items, " save10 ")).toBe(855);
+  });
+
+  it("rounds the SAVE10 discount to the nearest cent", () => {
+    expect(calculateDiscountCents([{ productId: "espresso", quantity: 1 }], "SAVE10")).toBe(30); // 29.5
+    expect(calculateCartTotal([{ productId: "espresso", quantity: 1 }], "SAVE10")).toBe(265);
+  });
+
+  it("gives no discount on an empty cart", () => {
+    expect(calculateCartTotal([], "SAVE10")).toBe(0);
+    expect(calculateDiscountCents([], "SAVE10")).toBe(0);
   });
 
   it("ignores unknown promo codes", () => {

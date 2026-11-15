@@ -127,6 +127,46 @@ describe("buildOrder", () => {
   });
 });
 
+describe("promo codes", () => {
+  it("accepts SAVE10 in any case and normalizes it", () => {
+    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    expect(result.ok && result.request.promoCode).toBe("SAVE10");
+  });
+
+  it("treats a missing or empty promo code as none", () => {
+    for (const promoCode of [undefined, null, ""]) {
+      const result = validateOrderRequest({ ...VALID, promoCode });
+      expect(result.ok && result.request.promoCode).toBeUndefined();
+    }
+  });
+
+  it("rejects unknown or non-string promo codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "NOPE" })).toEqual([
+      "That promo code isn't valid.",
+    ]);
+    expect(errorsFor({ ...VALID, promoCode: 10 })).toHaveLength(1);
+  });
+
+  it("re-prices the order with the discount on the server", () => {
+    const order = buildOrder(
+      {
+        name: "Ada",
+        pickup: "asap",
+        promoCode: "SAVE10",
+        items: [
+          { productId: "drip", quantity: 3 },
+          { productId: "espresso", quantity: 1 },
+        ],
+      },
+      "BB-TEST02",
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+    expect(order.totalCents).toBe(1116);
+    expect(order.discountCents).toBe(124);
+    expect(order.promoCode).toBe("SAVE10");
+  });
+});
+
 describe("pickupLabel", () => {
   it("returns the label for a known slot", () => {
     expect(pickupLabel("in-30")).toBe("In 30 minutes");

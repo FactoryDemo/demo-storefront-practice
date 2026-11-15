@@ -52,13 +52,28 @@ export function priceLines(items: CartItem[]): PricedLine[] {
  * ignored, and the total never goes below zero.
  */
 export function calculateCartTotal(items: CartItem[], promoCode?: string): number {
-  const lines = priceLines(items);
-  const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  const subtotal = priceLines(items).reduce(
+    (sum, line) => sum + line.lineTotalCents,
+    0
+  );
+  return subtotal - calculateDiscountCents(items, promoCode);
+}
+
+/**
+ * Cents a promo code takes off the cart, after bulk pricing. Zero for
+ * missing or unknown codes, and never more than the cart subtotal.
+ */
+export function calculateDiscountCents(
+  items: CartItem[],
+  promoCode?: string
+): number {
   const promotion = promoCode ? findPromotion(promoCode) : null;
   if (!promotion) {
-    return subtotal;
+    return 0;
   }
-  return Math.max(0, subtotal - promotion.discountCents(lines));
+  const lines = priceLines(items);
+  const subtotal = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  return Math.min(subtotal, Math.max(0, promotion.discountCents(lines)));
 }
 
 function safeLookup(id: string): Product | null {

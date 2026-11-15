@@ -16,6 +16,7 @@ import {
   countItems,
   parseStoredCart,
 } from "../lib/cart";
+import { findPromotion } from "../lib/promotions";
 import type { CartItem } from "../lib/types";
 import { track } from "./posthog";
 
@@ -27,6 +28,11 @@ type CartContextValue = {
   /** False until the saved cart has been read from localStorage. */
   isLoaded: boolean;
   isOpen: boolean;
+  /** Normalized promo code applied to the cart, or null. */
+  promoCode: string | null;
+  /** Applies a code if it is a live promotion; returns whether it was. */
+  applyPromoCode: (code: string) => boolean;
+  removePromoCode: () => void;
   addItem: (productId: string) => void;
   changeQuantity: (productId: string, delta: number) => void;
   clear: () => void;
@@ -41,6 +47,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+
+  const applyPromoCode = useCallback((code: string) => {
+    const promotion = findPromotion(code);
+    setPromoCode(promotion ? promotion.code : null);
+    return promotion !== null;
+  }, []);
+  const removePromoCode = useCallback(() => setPromoCode(null), []);
 
   useEffect(() => {
     setItems(parseStoredCart(window.localStorage.getItem(STORAGE_KEY)));
@@ -68,16 +82,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount: countItems(items),
       isLoaded,
       isOpen,
+      promoCode,
+      applyPromoCode,
+      removePromoCode,
       addItem,
       changeQuantity,
-      clear: () => setItems([]),
+      clear: () => {
+        setItems([]);
+        setPromoCode(null);
+      },
       openCart: () => {
         setIsOpen(true);
         track(ANALYTICS_EVENTS.cartOpened, cartProperties(items));
       },
       closeCart: () => setIsOpen(false),
     }),
-    [items, isLoaded, isOpen, addItem, changeQuantity]
+    [
+      items,
+      isLoaded,
+      isOpen,
+      promoCode,
+      applyPromoCode,
+      removePromoCode,
+      addItem,
+      changeQuantity,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
