@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getProduct } from "../lib/products";
+import { getProduct, PRODUCTS } from "../lib/products";
+import { PROMOTIONS } from "../lib/promotions";
 import {
   calculateCartTotal,
   calculateLineTotal,
@@ -64,12 +65,48 @@ describe("calculateCartTotal", () => {
 
   it("takes 10% off the order with SAVE10, case-insensitively", () => {
     const items: CartItem[] = [
-      { productId: "drip", quantity: 3 }, // 945 after bulk
+      { productId: "drip", quantity: 2 }, // 700
       { productId: "espresso", quantity: 1 }, // 295
     ];
-    expect(calculateCartTotal(items)).toBe(1240);
-    expect(calculateCartTotal(items, "SAVE10")).toBe(1116);
-    expect(calculateCartTotal(items, " save10 ")).toBe(1116);
+    expect(calculateCartTotal(items)).toBe(995);
+    expect(calculateCartTotal(items, "SAVE10")).toBe(895);
+    expect(calculateCartTotal(items, " save10 ")).toBe(895);
+  });
+
+  it("never stacks a promo code with bulk pricing (FIN-212)", () => {
+    for (const product of PRODUCTS) {
+      for (const quantity of [BULK_DISCOUNT_THRESHOLD, 4, 99]) {
+        const items = [{ productId: product.id, quantity }];
+        for (const promotion of PROMOTIONS) {
+          expect(calculateCartTotal(items, promotion.code)).toBe(
+            calculateCartTotal(items)
+          );
+        }
+      }
+    }
+    expect(
+      calculateCartTotal([{ productId: "espresso", quantity: 3 }], "SAVE10")
+    ).toBe(797);
+  });
+
+  it("only applies SAVE10 to non-bulk lines in a mixed cart", () => {
+    const items = [
+      { productId: "drip", quantity: 3 }, // 945, no additional discount
+      { productId: "espresso", quantity: 1 }, // 295, 30 off
+    ];
+    expect(calculateCartTotal(items, "SAVE10")).toBe(1210);
+  });
+
+  it("recalculates promo eligibility across the bulk threshold", () => {
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 2 }], "SAVE10")
+    ).toBe(630);
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 3 }], "SAVE10")
+    ).toBe(945);
+    expect(
+      calculateCartTotal([{ productId: "drip", quantity: 2 }], "SAVE10")
+    ).toBe(630);
   });
 
   it("rounds the SAVE10 discount to the nearest cent", () => {

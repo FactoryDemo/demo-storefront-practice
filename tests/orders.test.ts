@@ -135,12 +135,32 @@ describe("pickupLabel", () => {
 
 describe("promo codes", () => {
   it("normalizes a valid code and discounts the order total", () => {
-    const result = validateOrderRequest({ ...VALID, promoCode: " save10 " });
+    const result = validateOrderRequest({
+      ...VALID,
+      items: [{ productId: "espresso", quantity: 1 }],
+      promoCode: " save10 ",
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.request.promoCode).toBe("SAVE10");
     const order = buildOrder(result.request, "BB-TEST", new Date(0));
-    expect(order.totalCents).toBe(850); // 94.5 off rounds up to 95
+    expect(order.totalCents).toBe(265); // 29.5 off rounds up to 30
+  });
+
+  it("does not stack a promo with bulk pricing after merging repeated products", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      items: [
+        { productId: "espresso", quantity: 1 },
+        { productId: "espresso", quantity: 2 },
+        { productId: "drip", quantity: 1 },
+      ],
+      promoCode: "SAVE10",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const order = buildOrder(result.request, "BB-TEST", new Date(0));
+    expect(order.totalCents).toBe(1112); // bulk espresso 797 + promo drip 315
   });
 
   it("treats a blank code as no code", () => {
