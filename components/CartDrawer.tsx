@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatCurrency } from "../lib/currency";
 import {
   BULK_DISCOUNT_THRESHOLD,
@@ -14,7 +14,7 @@ import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, isOpen, closeCart, changeQuantity, promoCode } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -74,9 +74,14 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <PromoCodeField />
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>
+                  {formatCurrency(
+                    calculateCartTotal(items, promoCode ?? undefined)
+                  )}
+                </span>
               </div>
               <Link
                 href="/checkout"
@@ -90,6 +95,51 @@ export function CartDrawer() {
         )}
       </aside>
     </>
+  );
+}
+
+function PromoCodeField() {
+  const { promoCode, applyPromoCode, removePromoCode } = useCart();
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (applyPromoCode(draft)) {
+      setDraft("");
+      setError(null);
+    } else {
+      setError("That promo code isn't valid.");
+    }
+  }
+
+  if (promoCode) {
+    return (
+      <p className="promo-applied">
+        {promoCode} applied: 10% off the order.{" "}
+        <button type="button" className="text-link" onClick={removePromoCode}>
+          Remove
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <form className="promo-form" onSubmit={onSubmit}>
+      <label className="field">
+        <span>Promo code</span>
+        <input
+          name="promo"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          autoComplete="off"
+        />
+      </label>
+      <button type="submit" className="button" disabled={draft.trim() === ""}>
+        Apply
+      </button>
+      {error && <p role="alert">{error}</p>}
+    </form>
   );
 }
 
