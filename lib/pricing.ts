@@ -61,6 +61,14 @@ export function calculateCartTotal(items: CartItem[], promoCode?: string): numbe
   return Math.max(0, subtotal - promotion.discountCents(lines));
 }
 
+/** Cents a promo code takes off a cart; 0 for an unknown or empty code. */
+export function calculatePromoDiscount(
+  items: CartItem[],
+  promoCode?: string
+): number {
+  return calculateCartTotal(items) - calculateCartTotal(items, promoCode);
+}
+
 function safeLookup(id: string): Product | null {
   try {
     return getProduct(id);

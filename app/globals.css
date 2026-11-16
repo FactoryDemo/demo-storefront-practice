@@ -754,3 +754,32 @@ main {
     font-size: 18px;
   }
 }
+
+.promo-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.promo-form .field {
+  flex: 1;
+}
+
+.promo-applied,
+.promo-error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.promo-error {
+  flex-basis: 100%;
+  color: #b3401d;
+}
+
+.promo-discount {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}

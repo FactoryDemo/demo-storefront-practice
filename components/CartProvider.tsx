@@ -16,6 +16,7 @@ import {
   countItems,
   parseStoredCart,
 } from "../lib/cart";
+import { findPromotion } from "../lib/promotions";
 import type { CartItem } from "../lib/types";
 import { track } from "./posthog";
 
@@ -23,6 +24,11 @@ const STORAGE_KEY = "bean-and-byte:cart";
 
 type CartContextValue = {
   items: CartItem[];
+  /** Normalized code of the applied promo, or null. */
+  promoCode: string | null;
+  /** Returns false (and applies nothing) when the code is unknown. */
+  applyPromoCode: (code: string) => boolean;
+  removePromoCode: () => void;
   itemCount: number;
   /** False until the saved cart has been read from localStorage. */
   isLoaded: boolean;
@@ -39,6 +45,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 /** Holds the cart for every page and keeps it in localStorage. */
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -62,22 +69,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) => changeCartQuantity(current, productId, delta));
   }, []);
 
+  const applyPromoCode = useCallback((code: string) => {
+    const promotion = findPromotion(code);
+    setPromoCode(promotion ? promotion.code : null);
+    return promotion !== null;
+  }, []);
+
+  const removePromoCode = useCallback(() => setPromoCode(null), []);
+
   const value = useMemo<CartContextValue>(
     () => ({
       items,
+      promoCode,
+      applyPromoCode,
+      removePromoCode,
       itemCount: countItems(items),
       isLoaded,
       isOpen,
       addItem,
       changeQuantity,
-      clear: () => setItems([]),
+      clear: () => {
+        setItems([]);
+        setPromoCode(null);
+      },
       openCart: () => {
         setIsOpen(true);
         track(ANALYTICS_EVENTS.cartOpened, cartProperties(items));
       },
       closeCart: () => setIsOpen(false),
     }),
-    [items, isLoaded, isOpen, addItem, changeQuantity]
+    [
+      items,
+      promoCode,
+      isLoaded,
+      isOpen,
+      addItem,
+      changeQuantity,
+      applyPromoCode,
+      removePromoCode,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
