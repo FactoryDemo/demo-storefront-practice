@@ -128,3 +128,28 @@ test("GET /api/health returns ok", async ({ request }) => {
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: "ok" });
 });
+
+test("SAVE10 stops discounting a line at the bulk threshold through checkout", async ({
+  page,
+}) => {
+  await openStorefront(page);
+  await addToCart(page, "Espresso", 2);
+  const cart = await openCart(page);
+  await cart.getByLabel("Promo code").fill(" save10 ");
+  await cart.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$5.31");
+
+  await cart.getByRole("button", { name: "Add one Espresso" }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$7.97");
+  await expect(cart.locator(".cart-discount")).toContainText("$0.00");
+  await cart.getByRole("button", { name: "Remove one Espresso" }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$5.31");
+  await cart.getByRole("button", { name: "Add one Espresso" }).click();
+  await expect(cart.locator(".cart-total")).toContainText("$7.97");
+
+  await cart.getByRole("link", { name: "Checkout" }).click();
+  await page.getByLabel("Name for the order").fill("Ada");
+  await page.getByRole("button", { name: "Place order · $7.97" }).click();
+  await expect(page).toHaveURL(/\/orders\/BB-[0-9A-F]{6}$/);
+  await expect(page.locator(".order-total")).toContainText("$7.97");
+});

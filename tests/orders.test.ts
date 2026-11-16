@@ -168,12 +168,34 @@ describe("promo codes in orders", () => {
     ]);
   });
 
-  it("prices SAVE10 on the server", () => {
+  it("does not stack SAVE10 with server-side bulk pricing", () => {
     const order = buildOrder(requestFor("SAVE10"), "BB-1", placedAt);
-    // 3 x $3.50 = $10.50 -> $9.45 after bulk; 10% off = $0.95 (rounded)
-    expect(order.promoDiscountCents).toBe(95);
-    expect(order.totalCents).toBe(850);
+    expect(order.promoDiscountCents).toBe(0);
+    expect(order.totalCents).toBe(945);
     expect(order.promoCode).toBe("SAVE10");
+  });
+
+  it("excludes merged bulk lines but discounts eligible lines", () => {
+    const result = validateOrderRequest({
+      ...VALID,
+      promoCode: " save10 ",
+      items: [
+        { productId: "espresso", quantity: 1 },
+        { productId: "espresso", quantity: 2 },
+        { productId: "drip", quantity: 1 },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.errors.join(", "));
+    }
+    const order = buildOrder(result.request, "BB-1", placedAt);
+    expect(order.lines).toEqual([
+      { productId: "espresso", quantity: 3, lineTotalCents: 797 },
+      { productId: "drip", quantity: 1, lineTotalCents: 350 },
+    ]);
+    expect(order.promoDiscountCents).toBe(35);
+    expect(order.totalCents).toBe(1112);
   });
 
   it("leaves the total alone without a code", () => {
