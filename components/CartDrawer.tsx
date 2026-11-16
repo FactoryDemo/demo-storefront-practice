@@ -2,19 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatCurrency } from "../lib/currency";
 import {
   BULK_DISCOUNT_THRESHOLD,
   calculateCartTotal,
   calculateLineTotal,
 } from "../lib/pricing";
+import { findPromotion } from "../lib/promotions";
 import { getProduct } from "../lib/products";
 import type { CartItem } from "../lib/types";
 import { useCart } from "./CartProvider";
 
 export function CartDrawer() {
-  const { items, isOpen, closeCart, changeQuantity } = useCart();
+  const { items, isOpen, closeCart, changeQuantity, promoCode } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -74,9 +75,26 @@ export function CartDrawer() {
                 Buy {BULK_DISCOUNT_THRESHOLD} or more of any one item and that
                 line is 10% off.
               </p>
+              <PromoCodeForm />
+              {promoCode && (
+                <div className="cart-discount">
+                  <span>{promoCode} discount</span>
+                  <span>
+                    −
+                    {formatCurrency(
+                      calculateCartTotal(items) -
+                        calculateCartTotal(items, promoCode)
+                    )}
+                  </span>
+                </div>
+              )}
               <div className="cart-total">
                 <span>Total</span>
-                <span>{formatCurrency(calculateCartTotal(items))}</span>
+                <span>
+                  {formatCurrency(
+                    calculateCartTotal(items, promoCode ?? undefined)
+                  )}
+                </span>
               </div>
               <Link
                 href="/checkout"
@@ -90,6 +108,61 @@ export function CartDrawer() {
         )}
       </aside>
     </>
+  );
+}
+
+function PromoCodeForm() {
+  const { promoCode, applyPromoCode, removePromoCode } = useCart();
+  const [input, setInput] = useState("");
+  const [error, setError] = useState(false);
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (input.trim() === "") {
+      return;
+    }
+    const applied = applyPromoCode(input);
+    setError(!applied);
+    if (applied) {
+      setInput("");
+    }
+  }
+
+  if (promoCode) {
+    return (
+      <p className="promo-applied">
+        {promoCode}: {findPromotion(promoCode)?.description}{" "}
+        <button type="button" className="text-link" onClick={removePromoCode}>
+          Remove
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <form className="promo-form" onSubmit={onSubmit}>
+      <label className="field">
+        <span>Promo code</span>
+        <input
+          name="promo"
+          value={input}
+          onChange={(event) => {
+            setInput(event.target.value);
+            setError(false);
+          }}
+          autoComplete="off"
+          aria-invalid={error}
+        />
+      </label>
+      <button type="submit" className="button">
+        Apply
+      </button>
+      {error && (
+        <p className="promo-error" role="alert">
+          That promo code isn&apos;t valid.
+        </p>
+      )}
+    </form>
   );
 }
 

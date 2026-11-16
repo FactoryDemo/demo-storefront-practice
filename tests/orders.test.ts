@@ -23,7 +23,12 @@ describe("validateOrderRequest", () => {
     const result = validateOrderRequest({ ...VALID, name: "  Ada  " });
     expect(result).toEqual({
       ok: true,
-      request: { name: "Ada", pickup: "asap", items: VALID.items },
+      request: {
+        name: "Ada",
+        pickup: "asap",
+        items: VALID.items,
+        promoCode: null,
+      },
     });
   });
 
@@ -121,6 +126,8 @@ describe("buildOrder", () => {
         { productId: "drip", quantity: 3, lineTotalCents: 945 },
         { productId: "espresso", quantity: 1, lineTotalCents: 295 },
       ],
+      promoCode: null,
+      promoDiscountCents: 0,
       totalCents: 1240,
       placedAt: "2026-01-02T03:04:05.000Z",
     });
@@ -130,5 +137,48 @@ describe("buildOrder", () => {
 describe("pickupLabel", () => {
   it("returns the label for a known slot", () => {
     expect(pickupLabel("in-30")).toBe("In 30 minutes");
+  });
+});
+
+describe("promo codes in orders", () => {
+  const placedAt = new Date("2026-01-01T00:00:00Z");
+
+  function requestFor(promoCode?: unknown) {
+    const result = validateOrderRequest({ ...VALID, promoCode });
+    if (!result.ok) {
+      throw new Error(result.errors.join(", "));
+    }
+    return result.request;
+  }
+
+  it("normalizes a valid code", () => {
+    expect(requestFor(" save10 ").promoCode).toBe("SAVE10");
+  });
+
+  it("treats a blank code as no code", () => {
+    expect(requestFor("  ").promoCode).toBeNull();
+  });
+
+  it("rejects unknown and non-string codes", () => {
+    expect(errorsFor({ ...VALID, promoCode: "NOPE" })).toEqual([
+      "That promo code isn't valid.",
+    ]);
+    expect(errorsFor({ ...VALID, promoCode: 10 })).toEqual([
+      "Promo code must be text.",
+    ]);
+  });
+
+  it("prices SAVE10 on the server", () => {
+    const order = buildOrder(requestFor("SAVE10"), "BB-1", placedAt);
+    // 3 x $3.50 = $10.50 -> $9.45 after bulk; 10% off = $0.95 (rounded)
+    expect(order.promoDiscountCents).toBe(95);
+    expect(order.totalCents).toBe(850);
+    expect(order.promoCode).toBe("SAVE10");
+  });
+
+  it("leaves the total alone without a code", () => {
+    const order = buildOrder(requestFor(), "BB-1", placedAt);
+    expect(order.promoDiscountCents).toBe(0);
+    expect(order.totalCents).toBe(945);
   });
 });

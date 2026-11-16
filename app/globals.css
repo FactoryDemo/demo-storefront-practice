@@ -754,3 +754,30 @@ main {
     font-size: 18px;
   }
 }
+
+.cart-discount,
+.order-discount {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.promo-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.promo-applied,
+.promo-error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.promo-error {
+  grid-column: 1 / -1;
+  color: #b3261e;
+}
